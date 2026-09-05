@@ -1,0 +1,49 @@
+{
+  "name": "athar-studio",
+  "version": "0.1.1",
+  "private": true,
+  "description": "A Windows editor for reviewed Arabic-to-English captioned clips",
+  "license": "MIT",
+  "engines": { "node": ">=20.19.0" },
+  "type": "module",
+  "scripts": {
+    "predev": "npm run prepare:assets",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run prepare:assets",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:native": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-native.ps1",
+    "check:repo": "node scripts/check-repository.mjs",
+    "check": "npm run check:repo && npm test && npm run build",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "prepare:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-runtime.ps1"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.5",
+    "@fontsource/noto-naskh-arabic": "^5.2.5",
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "libass-wasm": "4.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.4",
+    "wawoff2": "^2.0.1"
+  }
+}
