@@ -1,6 +1,6 @@
 # Athar Studio
 
-A Windows desktop editor for translated Arabic lecture clips. The workflow is import → select one excerpt → transcribe Arabic locally → manually translate with Gemini → review → style → export.
+A Windows desktop editor for translated Arabic lecture clips made specifically for people who are active in the dawah scene translating clips of scholars into other languages. The workflow is import → select one excerpt → transcribe Arabic locally → manually translate with Gemini → review → style → export.
 
 This is a working **0.1.1 Windows pilot**, with real native transcription and rendering. It does not automatically upload audio, call a paid translation API, or publish content.
 
@@ -26,7 +26,7 @@ The app downloads its speech model on demand, outside the installer. After insta
 
 **AI review limits:** Gemini receives text, not audio. Its Arabic corrections are proposals until the creator checks them. The app never labels machine output as scholarly verification.
 
-## What is implemented
+## What is available right now
 
 - Tauri 2 / React / TypeScript / Rust desktop workspace.
 - Local media probing, playback proxies, waveform, excerpt handles, and original audio preservation.
