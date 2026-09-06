@@ -45,7 +45,7 @@ pub fn import(app: &AppHandle, path: &str, job: &Job) -> Result<Media, String> {
     // Rectify before downsampling so the waveform measures the envelope, not low-frequency audio.
     let samples = jobs::process(&ffmpeg, &["-v", "error", "-nostdin", "-i", path, "-map", "0:a:0", "-vn", "-ac", "1", "-af", "aeval=abs(val(0)),aresample=100", "-ar", "100", "-f", "f32le", "pipe:1"].map(String::from), None, app, job, duration, "Building audio waveform")?;
     let values: Vec<f32> = samples.chunks_exact(4).map(|b| f32::from_le_bytes([b[0],b[1],b[2],b[3]]).abs()).collect();
-    let width = 360usize; let step = (values.len() as f64 / width as f64).max(1.0);
+    let width = values.len().clamp(1,16_384); let step = (values.len() as f64 / width as f64).max(1.0);
     let mut waveform = Vec::with_capacity(width);
     for i in 0..width {
         let start = (i as f64 * step) as usize; let end = (((i+1) as f64 * step) as usize).min(values.len());

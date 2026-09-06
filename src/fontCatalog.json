@@ -1,0 +1,548 @@
+[
+  {
+    "id": "noto-naskh-arabic",
+    "family": "Noto Naskh Arabic",
+    "language": "arabic",
+    "files": [
+      "noto-naskh-arabic-arabic-400-normal.ttf",
+      "noto-naskh-arabic-latin-400-normal.ttf",
+      "noto-naskh-arabic-latin-ext-400-normal.ttf",
+      "noto-naskh-arabic-arabic-700-normal.ttf",
+      "noto-naskh-arabic-latin-700-normal.ttf",
+      "noto-naskh-arabic-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1405,
+        "descent": 634
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1405,
+        "descent": 634
+      }
+    },
+    "assFamily": "Noto Naskh Arabic"
+  },
+  {
+    "id": "amiri",
+    "family": "Amiri",
+    "language": "arabic",
+    "files": [
+      "amiri-arabic-400-normal.ttf",
+      "amiri-latin-400-normal.ttf",
+      "amiri-latin-ext-400-normal.ttf",
+      "amiri-arabic-700-normal.ttf",
+      "amiri-latin-700-normal.ttf",
+      "amiri-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1850,
+        "descent": 910
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1850,
+        "descent": 910
+      }
+    },
+    "assFamily": "Amiri"
+  },
+  {
+    "id": "cairo",
+    "family": "Cairo",
+    "language": "arabic",
+    "files": [
+      "cairo-arabic-400-normal.ttf",
+      "cairo-latin-400-normal.ttf",
+      "cairo-latin-ext-400-normal.ttf",
+      "cairo-arabic-700-normal.ttf",
+      "cairo-latin-700-normal.ttf",
+      "cairo-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1312,
+        "descent": 571
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1312,
+        "descent": 571
+      }
+    },
+    "assFamily": "Cairo"
+  },
+  {
+    "id": "tajawal",
+    "family": "Tajawal",
+    "language": "arabic",
+    "files": [
+      "tajawal-arabic-400-normal.ttf",
+      "tajawal-latin-400-normal.ttf",
+      "tajawal-arabic-700-normal.ttf",
+      "tajawal-latin-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1016,
+        "descent": 375
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1065,
+        "descent": 411
+      }
+    },
+    "assFamily": "Tajawal"
+  },
+  {
+    "id": "noto-kufi-arabic",
+    "family": "Noto Kufi Arabic",
+    "language": "arabic",
+    "files": [
+      "noto-kufi-arabic-arabic-400-normal.ttf",
+      "noto-kufi-arabic-latin-400-normal.ttf",
+      "noto-kufi-arabic-latin-ext-400-normal.ttf",
+      "noto-kufi-arabic-arabic-700-normal.ttf",
+      "noto-kufi-arabic-latin-700-normal.ttf",
+      "noto-kufi-arabic-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1507,
+        "descent": 650
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1507,
+        "descent": 650
+      }
+    },
+    "assFamily": "Noto Kufi Arabic"
+  },
+  {
+    "id": "noto-sans-arabic",
+    "family": "Noto Sans Arabic",
+    "language": "arabic",
+    "files": [
+      "noto-sans-arabic-arabic-400-normal.ttf",
+      "noto-sans-arabic-latin-400-normal.ttf",
+      "noto-sans-arabic-latin-ext-400-normal.ttf",
+      "noto-sans-arabic-arabic-700-normal.ttf",
+      "noto-sans-arabic-latin-700-normal.ttf",
+      "noto-sans-arabic-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1431,
+        "descent": 738
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1431,
+        "descent": 738
+      }
+    },
+    "assFamily": "Noto Sans Arabic"
+  },
+  {
+    "id": "scheherazade-new",
+    "family": "Scheherazade New",
+    "language": "arabic",
+    "files": [
+      "scheherazade-new-arabic-400-normal.ttf",
+      "scheherazade-new-latin-400-normal.ttf",
+      "scheherazade-new-latin-ext-400-normal.ttf",
+      "scheherazade-new-arabic-700-normal.ttf",
+      "scheherazade-new-latin-700-normal.ttf",
+      "scheherazade-new-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2048,
+        "ascent": 2884,
+        "descent": 2100
+      },
+      "bold": {
+        "units": 2048,
+        "ascent": 2884,
+        "descent": 2100
+      }
+    },
+    "assFamily": "Scheherazade New"
+  },
+  {
+    "id": "reem-kufi",
+    "family": "Reem Kufi",
+    "language": "arabic",
+    "files": [
+      "reem-kufi-arabic-400-normal.ttf",
+      "reem-kufi-latin-400-normal.ttf",
+      "reem-kufi-latin-ext-400-normal.ttf",
+      "reem-kufi-arabic-700-normal.ttf",
+      "reem-kufi-latin-700-normal.ttf",
+      "reem-kufi-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1400,
+        "descent": 400
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1400,
+        "descent": 400
+      }
+    },
+    "assFamily": "Reem Kufi"
+  },
+  {
+    "id": "markazi-text",
+    "family": "Markazi Text",
+    "language": "arabic",
+    "files": [
+      "markazi-text-arabic-400-normal.ttf",
+      "markazi-text-latin-400-normal.ttf",
+      "markazi-text-latin-ext-400-normal.ttf",
+      "markazi-text-arabic-700-normal.ttf",
+      "markazi-text-latin-700-normal.ttf",
+      "markazi-text-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2048,
+        "ascent": 1695,
+        "descent": 963
+      },
+      "bold": {
+        "units": 2048,
+        "ascent": 1695,
+        "descent": 963
+      }
+    },
+    "assFamily": "Markazi Text"
+  },
+  {
+    "id": "ibm-plex-sans-arabic",
+    "family": "IBM Plex Sans Arabic",
+    "language": "arabic",
+    "files": [
+      "ibm-plex-sans-arabic-arabic-400-normal.ttf",
+      "ibm-plex-sans-arabic-latin-400-normal.ttf",
+      "ibm-plex-sans-arabic-latin-ext-400-normal.ttf",
+      "ibm-plex-sans-arabic-arabic-700-normal.ttf",
+      "ibm-plex-sans-arabic-latin-700-normal.ttf",
+      "ibm-plex-sans-arabic-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1128,
+        "descent": 601
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1128,
+        "descent": 601
+      }
+    },
+    "assFamily": "IBM Plex Sans Arabic"
+  },
+  {
+    "id": "inter",
+    "family": "Inter",
+    "language": "english",
+    "files": [
+      "inter-latin-400-normal.ttf",
+      "inter-latin-ext-400-normal.ttf",
+      "inter-latin-700-normal.ttf",
+      "inter-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2048,
+        "ascent": 2269,
+        "descent": 660
+      },
+      "bold": {
+        "units": 2048,
+        "ascent": 2269,
+        "descent": 660
+      }
+    },
+    "assFamily": "Inter"
+  },
+  {
+    "id": "roboto",
+    "family": "Roboto",
+    "language": "english",
+    "files": [
+      "roboto-latin-400-normal.ttf",
+      "roboto-latin-ext-400-normal.ttf",
+      "roboto-latin-700-normal.ttf",
+      "roboto-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2048,
+        "ascent": 1946,
+        "descent": 512
+      },
+      "bold": {
+        "units": 2048,
+        "ascent": 1946,
+        "descent": 512
+      }
+    },
+    "assFamily": "Roboto"
+  },
+  {
+    "id": "open-sans",
+    "family": "Open Sans",
+    "language": "english",
+    "files": [
+      "open-sans-latin-400-normal.ttf",
+      "open-sans-latin-ext-400-normal.ttf",
+      "open-sans-latin-700-normal.ttf",
+      "open-sans-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2048,
+        "ascent": 2302,
+        "descent": 651
+      },
+      "bold": {
+        "units": 2048,
+        "ascent": 2302,
+        "descent": 651
+      }
+    },
+    "assFamily": "Open Sans"
+  },
+  {
+    "id": "lato",
+    "family": "Lato",
+    "language": "english",
+    "files": [
+      "lato-latin-400-normal.ttf",
+      "lato-latin-ext-400-normal.ttf",
+      "lato-latin-700-normal.ttf",
+      "lato-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2000,
+        "ascent": 1974,
+        "descent": 426
+      },
+      "bold": {
+        "units": 2000,
+        "ascent": 1974,
+        "descent": 426
+      }
+    },
+    "assFamily": "Lato"
+  },
+  {
+    "id": "montserrat",
+    "family": "Montserrat",
+    "language": "english",
+    "files": [
+      "montserrat-latin-400-normal.ttf",
+      "montserrat-latin-ext-400-normal.ttf",
+      "montserrat-latin-700-normal.ttf",
+      "montserrat-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1109,
+        "descent": 453
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1109,
+        "descent": 453
+      }
+    },
+    "assFamily": "Montserrat Thin"
+  },
+  {
+    "id": "poppins",
+    "family": "Poppins",
+    "language": "english",
+    "files": [
+      "poppins-latin-400-normal.ttf",
+      "poppins-latin-ext-400-normal.ttf",
+      "poppins-latin-700-normal.ttf",
+      "poppins-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1135,
+        "descent": 627
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1135,
+        "descent": 627
+      }
+    },
+    "assFamily": "Poppins"
+  },
+  {
+    "id": "source-sans-3",
+    "family": "Source Sans 3",
+    "language": "english",
+    "files": [
+      "source-sans-3-latin-400-normal.ttf",
+      "source-sans-3-latin-ext-400-normal.ttf",
+      "source-sans-3-latin-700-normal.ttf",
+      "source-sans-3-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 934,
+        "descent": 288
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 934,
+        "descent": 288
+      }
+    },
+    "assFamily": "Source Sans 3 ExtraLight"
+  },
+  {
+    "id": "merriweather",
+    "family": "Merriweather",
+    "language": "english",
+    "files": [
+      "merriweather-latin-400-normal.ttf",
+      "merriweather-latin-ext-400-normal.ttf",
+      "merriweather-latin-700-normal.ttf",
+      "merriweather-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 2000,
+        "ascent": 2476,
+        "descent": 988
+      },
+      "bold": {
+        "units": 2000,
+        "ascent": 2476,
+        "descent": 988
+      }
+    },
+    "assFamily": "Merriweather Light 18pt"
+  },
+  {
+    "id": "playfair-display",
+    "family": "Playfair Display",
+    "language": "english",
+    "files": [
+      "playfair-display-latin-400-normal.ttf",
+      "playfair-display-latin-ext-400-normal.ttf",
+      "playfair-display-latin-700-normal.ttf",
+      "playfair-display-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1159,
+        "descent": 251
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1159,
+        "descent": 251
+      }
+    },
+    "assFamily": "Playfair Display"
+  },
+  {
+    "id": "lora",
+    "family": "Lora",
+    "language": "english",
+    "files": [
+      "lora-latin-400-normal.ttf",
+      "lora-latin-ext-400-normal.ttf",
+      "lora-latin-700-normal.ttf",
+      "lora-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1206,
+        "descent": 294
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1206,
+        "descent": 294
+      }
+    },
+    "assFamily": "Lora"
+  },
+  {
+    "id": "oswald",
+    "family": "Oswald",
+    "language": "english",
+    "files": [
+      "oswald-latin-400-normal.ttf",
+      "oswald-latin-ext-400-normal.ttf",
+      "oswald-latin-700-normal.ttf",
+      "oswald-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1325,
+        "descent": 377
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1325,
+        "descent": 377
+      }
+    },
+    "assFamily": "Oswald"
+  },
+  {
+    "id": "nunito-sans",
+    "family": "Nunito Sans",
+    "language": "english",
+    "files": [
+      "nunito-sans-latin-400-normal.ttf",
+      "nunito-sans-latin-ext-400-normal.ttf",
+      "nunito-sans-latin-700-normal.ttf",
+      "nunito-sans-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1102,
+        "descent": 327
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1102,
+        "descent": 327
+      }
+    },
+    "assFamily": "Nunito Sans 12pt ExtraLight 12pt"
+  }
+]

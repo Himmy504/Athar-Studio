@@ -1,11 +1,14 @@
 import { z } from 'zod';
 import type { Project, Segment, Style, TranslationRequest } from './types';
+import catalog from './fontCatalog.json';
+import { createPanel } from './panelPresets';
 
 const typeStyle = (size: number, color = '#FFFFFF') => ({ font: 'Inter', size, bold: false, color, outline: 2, shadow: 1, spacing: 0 });
 export const presets: Record<string, Style> = {
   Clean: {
     name: 'Clean', mode: 'english', ratio: '9:16', english: typeStyle(54), arabic: { ...typeStyle(65, '#E9DCB9'), font: 'Noto Naskh Arabic' },
     alignment: 'center', captionY: 72, lineGap: 22, fade: true,
+    panel: createPanel(),
     background: { kind: 'gradient', color: '#172B25', color2: '#07130F', path: '', fit: 'cover', dim: 20, blur: 0 },
     showScholar: true, showSource: false, logoPath: '',
   },
@@ -151,11 +154,12 @@ export function mergeSegment(p: Project, id: string): Project {
     correctionNote: [a.correctionNote, b.correctionNote].filter(Boolean).join(' '), approval: null, emphasis: [] }, ...p.segments.slice(i + 2)] };
 }
 
-const typographySchema = z.object({ font: z.enum(['Inter', 'Noto Naskh Arabic']), size: z.number().min(18).max(110), bold: z.boolean(), color: z.string().regex(/^#[0-9a-f]{6}$/i), outline: z.number().min(0).max(8), shadow: z.number().min(0).max(10), spacing: z.number().min(-3).max(12) });
+const typographySchema = z.object({ font: z.string().refine(name=>catalog.some(font=>font.family===name),'Choose a bundled caption font'), size: z.number().min(18).max(110), bold: z.boolean(), color: z.string().regex(/^#[0-9a-f]{6}$/i), outline: z.number().min(0).max(8), shadow: z.number().min(0).max(10), spacing: z.number().min(-3).max(12) });
 const colorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
 export const styleSchema = z.object({
   name: z.string(), mode: z.enum(['english', 'bilingual']), ratio: z.enum(['9:16', '1:1', '16:9']), arabic: typographySchema, english: typographySchema,
   alignment: z.enum(['left', 'center', 'right']), captionY: z.number().min(15).max(88), lineGap: z.number().min(0).max(60), fade: z.boolean(),
+  panel: z.object({preset:z.enum(['none','solid','glass','gold','paper','emerald','azure','midnight']),fill:colorSchema,border:colorSchema,opacity:z.number().min(10).max(100),width:z.number().min(50).max(94),padding:z.number().min(12).max(80),borderWidth:z.number().min(0).max(8)}).default(()=>createPanel()),
   background: z.object({ kind: z.enum(['original', 'solid', 'gradient', 'image', 'video']), color: colorSchema, color2: colorSchema, path: z.string(), fit: z.enum(['cover', 'contain']), dim: z.number().min(0).max(90), blur: z.number().min(0).max(30) }),
   showScholar: z.boolean(), showSource: z.boolean(), logoPath: z.string(),
 });

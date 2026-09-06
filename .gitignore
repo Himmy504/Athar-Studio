@@ -11,6 +11,7 @@ public/notices/
 public/qa-audio.wav
 .runtime-cache/
 test-results/
+.beta-artifacts/
 *.log
 *.local
 *.tsbuildinfo

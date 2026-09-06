@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { ArrowDownToLine, ArrowRight, BookOpen, Check, CheckCheck, CircleHelp, Cpu, Download, FilePlus2, FolderOpen, Languages, LoaderCircle, Monitor, MoreHorizontal, Pause, Plus, Redo2, Save, Undo2, Upload, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, BookOpen, Check, CheckCheck, CircleHelp, Cpu, Download, FilePlus2, FolderOpen, Languages, LoaderCircle, Monitor, Pause, Plus, Redo2, Save, Undo2, Upload, X } from 'lucide-react';
 import { desktop, chooseExport, chooseMedia, chooseProject, chooseSaveProject, downloadText, launchGemini, native, showFile } from './bridge';
-import { createRequest, exportErrors, formatTime, importResponse, isApproved, newProject, newSegment, parseProject, repairPrompt } from './domain';
+import { approve, createRequest, exportErrors, formatTime, importResponse, isApproved, newProject, newSegment, parseProject, repairPrompt } from './domain';
 import { captionWarnings, generateAss, generateSrt } from './subtitles';
 import { Modal, Field } from './components';
 import { useProject } from './useProject';
 import { Preview } from './Preview';
 import { ReviewPanel } from './ReviewPanel';
 import { StylePanel } from './StylePanel';
+import { ClipStrip } from './ClipStrip';
+import { useReviewPlayback } from './useReviewPlayback';
+import { PLAYBACK_RATES } from './playback';
+import { useCaptionFonts } from './fonts';
 import type { Device, Progress, Project, RuntimeStatus } from './types';
 
 type Dialog = 'translate'|'models'|'glossary'|'export'|'help'|'new'|'retranscribe'|null;
@@ -25,6 +29,9 @@ export default function App(){
   latest.current=p;
   latestPath.current=path;
   const notify=useCallback((message:string)=>setNotice(message.replace(/^Error:\s*/,'')),[]);
+  const playback=useReviewPlayback(p,player,setTime,notify,!!job);
+  const captionFonts=useCaptionFonts(p.style);
+  const ass=useMemo(()=>generateAss(p),[p,captionFonts.ready]);
   useEffect(()=>{
     if(!/^(Prompt copied|Repair prompt copied|Project opened|Project saved|Transcript ready|Translation imported|Subtitles exported|Export complete|Style saved)/.test(notice))return;
     const timer=setTimeout(()=>setNotice(''),3500);return()=>clearTimeout(timer);
@@ -58,10 +65,25 @@ export default function App(){
   },[p.media?.path,p.media?.previewPath]);
   useEffect(()=>{
     const listener=(e:KeyboardEvent)=>{
-      const isInput=['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName);
+      const target=e.target as HTMLElement,isInput=['INPUT','TEXTAREA','SELECT'].includes(target.tagName)||target.isContentEditable;
       if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();void saveProject();}
       if(!isInput&&!jobRef.current&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();}
       if(!isInput&&!jobRef.current&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}
+      if(dialog||trim||jobRef.current||e.repeat||document.querySelector('dialog[open],[role="dialog"]'))return;
+      if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&(!isInput||target.classList.contains('english-input')||target.classList.contains('arabic-input'))){
+        const selected=p.segments.find(s=>s.id===playback.selectedId);if(!selected)return;e.preventDefault();
+        try{const reviewed=approve(selected);edit(v=>({...v,segments:v.segments.map(s=>s.id===reviewed.id?reviewed:s)}));target.blur();playback.navigate(1);}catch(error){notify(error instanceof Error?error.message:String(error));}
+        return;
+      }
+      if(isInput){if(e.key==='Escape'&&target.tagName==='TEXTAREA')target.blur();return;}
+      if(e.ctrlKey||e.metaKey||e.altKey)return;
+      const key=e.key.toLowerCase();
+      if(key===' '&&target.tagName!=='BUTTON'){e.preventDefault();playback.toggle();}
+      else if(key==='r'){e.preventDefault();playback.replay();}
+      else if(key==='l'){e.preventDefault();playback.toggleLoop();}
+      else if(key==='arrowdown'){e.preventDefault();playback.navigate(1);}
+      else if(key==='arrowup'){e.preventDefault();playback.navigate(-1);}
+      else if(key==='['||key===']'){e.preventDefault();const i=PLAYBACK_RATES.indexOf(playback.rate as 1);playback.changeRate(PLAYBACK_RATES[Math.max(0,Math.min(PLAYBACK_RATES.length-1,i+(key==='['?-1:1)))]);}
     };
     window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);
   });
@@ -133,6 +155,7 @@ export default function App(){
     catch(e){setPasteError(e instanceof Error?e.message:String(e));}
   }
   async function doExport(){
+    if(exportFormat==='mp4'&&!captionFonts.ready){notify(captionFonts.error||'Caption fonts are loading. Try exporting again in a moment.');return;}
     const errors=exportErrors(p);if(errors.length){notify(errors.join(' '));return;}
     if(!exportConfirmed){notify('Confirm that you reviewed the final captions first.');return;}
     try{
@@ -142,7 +165,7 @@ export default function App(){
         downloadText(p.name+'-'+lang+'.srt',generateSrt(p,lang),'text/plain;charset=utf-8');notify('Subtitles exported.');return;
       }
       const target=await chooseExport(p.name,exportFormat);if(!target)return;
-      const result=await runJob('export','Preparing your export',id=>native.export(p,generateAss(p),target,exportFormat,id));
+      const result=await runJob('export','Preparing your export',id=>native.export(p,ass,target,exportFormat,id));
       if(result){setExported(result);notify('Export complete.');}
     }catch(e){notify(String(e));}
   }
@@ -151,8 +174,8 @@ export default function App(){
     if(clip.start===p.clip.start&&clip.end===p.clip.end)return;
     if(p.segments.length)setTrim(clip);else{edit(v=>({...v,clip,request:null}));setTime(0);if(player.current)player.current.currentTime=clip.start;}
   }
-  const seek=(n:number)=>{setTime(n);if(player.current){player.current.currentTime=p.clip.start+n;void player.current.play().catch(()=>{});}};
-  const busy=!!job,approved=p.segments.filter(isApproved).length,errors=exportErrors(p),warnings=captionWarnings(p);
+  const warnings=useMemo(()=>captionWarnings(p),[p,captionFonts.ready]);
+  const busy=!!job,approved=p.segments.filter(isApproved).length,errors=exportErrors(p);
   return <div className="app-shell">
     <input type="file" ref={fileInput} accept=".athar,.json,.bak" hidden onChange={async e=>{const file=e.target.files?.[0];if(file)try{replace(parseProject(await file.text()));setTime(0);}catch(err){notify(String(err));}e.target.value='';}}/>
     <header className="topbar">
@@ -179,11 +202,11 @@ export default function App(){
     {missing&&<div className="missing-banner">Source media not found.<button disabled={busy} onClick={()=>void importMedia(true)}>Relink source</button></div>}
     {missingPreview&&!missing&&<div className="missing-banner">Playback cache not found.<button disabled={busy} onClick={()=>void rebuildPlayback()}>Restore playback</button></div>}
     <main className={'workspace '+(busy?'processing':'')}>
-      <Preview project={p} player={player} time={time} setTime={setTime} onPlaybackError={notify} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy}/>
-      <ReviewPanel project={p} update={edit} onSeek={seek} onPrompt={()=>void copyPrompt()} onPaste={()=>setDialog('translate')} onGemini={()=>void launchGemini().catch(e=>notify(String(e)))} onTranscribe={()=>void transcribe()} busy={busy} notify={notify}/>
+      <Preview project={p} player={player} time={time} playback={playback} ass={ass} fontsReady={captionFonts.ready} fontError={captionFonts.error} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy}/>
+      <ReviewPanel project={p} update={edit} selectedId={playback.selectedId} onSelect={id=>playback.activate(id)} onPlay={id=>playback.activate(id,true)} onNavigate={playback.navigate} onPrompt={()=>void copyPrompt()} onPaste={()=>setDialog('translate')} onGemini={()=>void launchGemini().catch(e=>notify(String(e)))} onTranscribe={()=>void transcribe()} busy={busy} notify={notify}/>
       <StylePanel project={p} update={edit} notify={notify}/>
     </main>
-    <ClipStrip key={p.id+'-'+trimKey} project={p} busy={busy} onImport={()=>p.media?setDialog('new'):void importMedia()} onTrim={changeTrim} onTranscribe={()=>void transcribe()} time={time}/>
+    <ClipStrip key={p.id+'-'+trimKey} project={p} busy={busy} onImport={()=>p.media?setDialog('new'):void importMedia()} onTrim={changeTrim} onTranscribe={()=>void transcribe()} time={time} onSeek={playback.seek}/>
     {job&&<div className="job-panel" role="status"><div className="job-spinner"><LoaderCircle size={22}/></div><div><strong>{job.message}</strong><div className="job-progress"><span style={{width:Math.max(2,job.percent)+'%'}}/></div><small>{Math.round(job.percent)}%</small></div><button className="secondary-button" onClick={()=>void native.cancel(job.jobId).catch(e=>notify(String(e)))}><Pause size={14}/>Cancel</button></div>}
     {dialog==='translate'&&<Modal title="Import translation" subtitle="Paste the JSON response from Gemini." onClose={()=>setDialog(null)} wide>
       <textarea className="response-input" aria-label="Gemini JSON response" spellCheck={false} placeholder={'{\n  "schemaVersion": 1,\n  "requestId": "…",\n  "segments": [ … ]\n}'} value={response} onChange={e=>setResponse(e.target.value)}/>
@@ -217,6 +240,7 @@ export default function App(){
       </>}
     </Modal>}
     {dialog==='help'&&<Modal title="Workflow" onClose={()=>setDialog(null)}>
+      <dl className="shortcut-list"><dt>Space</dt><dd>Play / pause</dd><dt>R</dt><dd>Replay selected caption</dd><dt>L</dt><dd>Loop selected caption</dd><dt>↑ / ↓</dt><dd>Previous / next caption</dd><dt>[ / ]</dt><dd>Slower / faster playback</dd><dt>Ctrl + Enter</dt><dd>Approve caption and advance</dd><dt>Esc</dt><dd>Leave a caption text field</dd></dl>
       <ol className="help-steps"><li><strong>Import & select</strong><p>Choose a lecture file and drag the excerpt handles. One project holds one continuous passage.</p></li><li><strong>Transcribe locally</strong><p>Download a model in Models. Arabic transcription runs on your GPU when compatible, or your CPU.</p></li><li><strong>Translate with Gemini</strong><p>Copy the prepared prompt, paste it in Gemini, then paste its complete JSON response back here. Only text is shared manually.</p></li><li><strong>Listen & approve</strong><p>Replay each passage. Check proposed Arabic corrections, edit the translation, and approve your captions.</p></li><li><strong>Choose a look & export</strong><p>Customize captions, background, and branding. Export your approved clip or subtitle files.</p></li></ol>
       <button className="primary-button" onClick={()=>setDialog(null)}>Close</button>
     </Modal>}
@@ -231,28 +255,4 @@ export default function App(){
 
 function ModalJob({job,notify}:{job:Progress;notify:(s:string)=>void}){
   return <div className="modal-job" role="status"><LoaderCircle className="job-spinner" size={18}/><div><strong>{job.message}</strong><div className="job-progress"><span style={{width:Math.max(2,job.percent)+'%'}}/></div><small>{Math.round(job.percent)}%</small></div><button className="secondary-button" onClick={()=>void native.cancel(job.jobId).catch(e=>notify(String(e)))}>Cancel</button></div>;
-}
-
-function ClipStrip({project:p,busy,onImport,onTrim,onTranscribe,time}:{project:Project;busy:boolean;onImport:()=>void;onTrim:(clip:{start:number;end:number})=>void;onTranscribe:()=>void;time:number}){
-  const [range,setRange]=useState(p.clip),[active,setActive]=useState<'start'|'end'|null>(null),ref=useRef<HTMLDivElement>(null);
-  useEffect(()=>setRange(p.clip),[p.clip.start,p.clip.end]);
-  const duration=p.media?.duration??60;
-  const begin=(e:React.PointerEvent<HTMLButtonElement>,key:'start'|'end')=>{if(busy||!p.media)return;e.currentTarget.setPointerCapture(e.pointerId);setActive(key);};
-  const move=(e:React.PointerEvent<HTMLButtonElement>)=>{
-    if(!active||!ref.current)return;
-    const rect=ref.current.getBoundingClientRect(),n=Math.max(0,Math.min(duration,(e.clientX-rect.left)/rect.width*duration));
-    setRange(v=>({...v,[active]:active==='start'?Math.min(n,v.end-.1):Math.max(n,v.start+.1)}));
-  };
-  return <section className="clip-strip">
-    <div className="clip-source"><div className="source-icon"><Languages size={21}/></div><div><strong>{p.media?p.media.name:'No source'}</strong><span>{p.media?formatTime(p.media.duration)+' · '+(p.media.hasVideo?'VIDEO':'AUDIO'):'MP3, WAV, M4A, MP4, MOV, MKV'}</span></div><button className="icon-button" aria-label="Import media" disabled={busy} onClick={onImport}>{p.media?<MoreHorizontal size={19}/>:<Upload size={19}/>}</button></div>
-    <div className="waveform-section"><div className="waveform-label"><span>Excerpt</span><span>{formatTime(range.end-range.start)} selected</span></div>
-      <div className="waveform" ref={ref}><svg viewBox="0 0 1080 46" preserveAspectRatio="none" aria-label={p.media?'Audio waveform':'Import media to see its waveform'}>{(p.media?.waveform??Array.from({length:180},()=>.08)).map((n,i,arr)=><rect key={i} x={i/arr.length*1080} y={23-n*21} width={Math.max(1,1080/arr.length-2)} height={Math.max(2,n*42)} rx="1"/>)}</svg>
-      <div className="trim-region" style={{left:(range.start/duration*100)+'%',right:(100-range.end/duration*100)+'%'}}/>
-      {p.media&&(['start','end'] as const).map(key=><button key={key} aria-label={'Drag excerpt '+key} className={'trim-handle '+key} style={{left:(range[key]/duration*100)+'%'}} disabled={busy} onPointerDown={e=>begin(e,key)} onPointerMove={move} onPointerUp={()=>{if(active){onTrim(range);setActive(null);}}} onKeyDown={e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();const next={...range,[key]:Math.min(duration,Math.max(0,range[key]+(e.key==='ArrowLeft'?-.1:.1)))};setRange(next);onTrim(next);}}}><span/></button>)}
-      {p.media&&<div className="waveform-playhead" style={{left:((p.clip.start+time)/duration*100)+'%'}}/>}
-      </div>
-      <div className="trim-fields"><label>In <input aria-label="Excerpt start seconds" type="number" value={+range.start.toFixed(2)} step=".1" min="0" max={duration} disabled={!p.media||busy} onChange={e=>setRange(v=>({...v,start:+e.target.value}))} onBlur={()=>onTrim(range)}/></label><span>{p.media?formatTime(duration)+' total':''}</span><label>Out <input aria-label="Excerpt end seconds" type="number" value={+range.end.toFixed(2)} step=".1" min="0" max={duration} disabled={!p.media||busy} onChange={e=>setRange(v=>({...v,end:+e.target.value}))} onBlur={()=>onTrim(range)}/></label></div>
-    </div>
-    <button className={p.media?'transcribe-button':'primary-button import-first'} onClick={p.media?onTranscribe:onImport} disabled={busy}>{p.media?<Languages size={19}/>:<Upload size={18}/>}<span>{p.media?'Transcribe Arabic':'Import media'}</span><ArrowRight size={16}/></button>
-  </section>;
 }
