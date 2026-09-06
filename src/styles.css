@@ -49,7 +49,8 @@ svg { flex-shrink: 0; }
 /* One application toolbar, followed by the editor and excerpt strip. */
 .app-shell { height: 100dvh; min-height: 640px; display: flex; flex-direction: column; overflow: hidden; }
 .topbar { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 14px; flex-shrink: 0; background: #292a2e; border-bottom: 1px solid #111214; }
-.brand { font-size: 13px; font-weight: 600; white-space: nowrap; padding-right: 4px; }
+.brand { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; white-space: nowrap; padding-right: 4px; }
+.brand img { display: block; flex: none; object-fit: contain; }
 .topbar-divider { width: 1px; height: 22px; background: #44464c; flex-shrink: 0; }
 .file-actions, .topbar-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
 .file-actions .topbar-divider { margin: 0 6px; }
