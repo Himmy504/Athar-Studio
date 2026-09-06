@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 
 const files = [...new Set(execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {encoding:'utf8'}).split('\0').filter(Boolean))];
 const errors = [];
@@ -7,6 +7,7 @@ const forbidden = /(^|\/)(node_modules|dist|test-results|\.runtime-cache|\.venv|
 const secretPatterns = [/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/, /\bgh[pousr]_[A-Za-z0-9]{36,}\b/, /\bgithub_pat_[A-Za-z0-9_]{60,}\b/, /\bAKIA[0-9A-Z]{16}\b/, /\bsk-(?:proj-)?[A-Za-z0-9_-]{40,}\b/];
 let bytes = 0;
 for (const file of files) {
+  if (!existsSync(file)) continue; // Ignore tracked files removed from the working tree.
   if (forbidden.test(file)) errors.push(`${file}: generated, private, or binary runtime file`);
   const stat = statSync(file);
   bytes += stat.size;

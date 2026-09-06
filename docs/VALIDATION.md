@@ -73,7 +73,7 @@ After running the browser checks and with Vite running, `python scripts/caption-
 
 `scripts/desktop-qa.py` attaches to a production app launched with `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9223`. It uses the installed Chrome-compatible Playwright CDP client, without disabling the application's content-security policy. Launch only the QA app instance with this temporary environment variable; normal creator launches do not enable debugging. Run this after installer packaging has finished so the QA process does not lock the binary during bundling. The script closes its tested app window when finished.
 
-The desktop harness stubs the fetch transport used for storage IPC and the export file picker, proves that interception works before loading fixtures, preserves a recovery snapshot under ignored `test-results/`, and checks that recovery files remain unchanged. Assigning to Tauri's read-only `invoke` property does not intercept calls. An earlier harness revision silently failed that assignment and wrote a synthetic recovery draft; the verified transport stub replaces that approach.
+The desktop harness stubs the fetch transport used for storage IPC and the export file picker, proves that interception works before loading fixtures, preserves a recovery snapshot under ignored `test-results/`, and checks that recovery files remain unchanged. Storage interception must pass its preflight check before fixtures are loaded.
 
 ## Required human and hardware pilot
 

@@ -56,3 +56,6 @@ Desktop.ini
 *.7z
 coverage/
 playwright-report/
+
+# Local maintainer correspondence and release planning
+.maintainer-notes/

@@ -21,7 +21,7 @@ Athar Studio's original code is MIT licensed. Include the repository's `LICENSE`
 
 ## Resolve before sending the installer
 
-1. Obtain the exact FFmpeg build's corresponding sources, including statically linked dependencies, modifications, and build scripts. The prepared [source request](SOURCE-REQUEST.md) identifies what is missing. Keep the response and source archive hashes with the release record.
+1. Obtain the exact FFmpeg build's corresponding sources, including statically linked dependencies, modifications, and build scripts. Request exact dependency revisions, patches, build recipes, and original notices from the build provider. Keep the response and source archive hashes with the release record.
 2. Assemble SubtitlesOctopus's exact main source and pinned submodules, including relevant patches and build instructions. Verify completeness rather than assuming a GitHub main-project archive includes submodules.
 3. Review inventory entries with missing notices and Microsoft redistributable provenance. Retain required original notices with the release.
 4. Make the required source materials available alongside the binary using a distribution method appropriate to the actual licenses. Document the real download location and verify it as a recipient. Do not replace missing source with a generic upstream homepage or an unfulfillable written offer.

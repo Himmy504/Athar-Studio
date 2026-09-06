@@ -4,14 +4,14 @@ Athar Studio is a focused Windows editor for translated Arabic clips. Keep chang
 
 ## Development
 
-Use Node 22 (see `.node-version`), npm, and Rust 1.88 or newer. Native development also needs the Windows prerequisites in [README.md](README.md).
+Use Node 22 (see `.node-version`), npm, and Rust 1.88 or newer. Native development also needs the Windows prerequisites in [the build guide](docs/BUILDING.md).
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-The browser editor supports project editing and SRT export. For local transcription and MP4 export, prepare the native runtimes and run `npm run desktop` as described in the README.
+The browser editor supports project editing and SRT export. For local transcription and MP4 export, prepare the native runtimes and run `npm run desktop` as described in the build guide.
 
 Before opening a pull request:
 

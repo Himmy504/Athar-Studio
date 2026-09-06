@@ -93,10 +93,10 @@ if (process.argv.includes('--check')) {
   write('inventory/rust-resolved-including-build-dependencies.json', rust);
   write('inventory/missing-notices.json', missing);
   const sourceFiles = [...new Set(execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean))];
-  for (const file of sourceFiles) copy(file, path.join('source/athar-studio', file));
+  for (const file of sourceFiles.filter(existsSync)) copy(file, path.join('source/athar-studio', file));
   write('inventory/source-snapshot.json', { version, gitHead: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     description: 'Current working files, including uncommitted changes; no creator data or generated runtime directories. Not a reproducible-build attestation.',
-    files: sourceFiles });
+    files: sourceFiles.filter(existsSync) });
   const blockers = [
     'Exact FFmpeg static dependency sources, patches, and build inputs are not assembled.',
     'SubtitlesOctopus pinned submodule source package is not assembled.',
