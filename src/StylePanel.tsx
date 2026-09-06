@@ -4,6 +4,8 @@ import { Field, Range, Toggle } from './components';
 import { presets, styleSchema } from './domain';
 import { chooseAsset } from './bridge';
 import type { Project, Style, Typography } from './types';
+import { FONT_CATALOG } from './fonts';
+import { createPanel, PANEL_PRESETS } from './panelPresets';
 
 export function StylePanel({ project: p, update, notify }: { project: Project; update: (fn:(p:Project)=>Project,key?:string)=>void; notify:(message:string)=>void }) {
   const [tab,setTab]=useState<'captions'|'background'|'brand'>('captions');
@@ -35,10 +37,25 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
           {Object.values(presets).map(preset=><option key={preset.name}>{preset.name}</option>)}
         </select></Field>
         <Field label="Display"><select value={s.mode} onChange={e=>change({mode:e.target.value as Style['mode']})}><option value="bilingual">Arabic + English</option><option value="english">English only</option></select></Field>
+        <Field label="Caption panel"><select aria-label="Caption panel preset" title="Apply a panel with matching text colors and outlines" value={s.panel.preset} onChange={e=>{
+          const preset=e.target.value as Style['panel']['preset'],palette=PANEL_PRESETS[preset];
+          const effects=preset==='none'?{}:{outline:preset==='paper'?0:.5,shadow:0};
+          change({panel:createPanel(preset),english:{...s.english,...effects,color:palette.ink},arabic:{...s.arabic,...effects,color:palette.arabicInk}},'panel-preset');
+        }}>{Object.entries(PANEL_PRESETS).map(([id,preset])=><option key={id} value={id}>{preset.label}</option>)}</select></Field>
+        {s.panel.preset!=='none'&&<details className="advanced panel-settings"><summary>Panel settings <ChevronDown size={13}/></summary>
+          <div className="field-row"><Field label="Panel fill"><input aria-label="Panel fill color" type="color" value={s.panel.fill} onChange={e=>change({panel:{...s.panel,fill:e.target.value}},'panel-fill')}/></Field><Field label="Border"><input aria-label="Panel border color" type="color" value={s.panel.border} onChange={e=>change({panel:{...s.panel,border:e.target.value}},'panel-border')}/></Field></div>
+          <Range label="Panel opacity" value={s.panel.opacity} min={10} max={100} suffix="%" onChange={opacity=>change({panel:{...s.panel,opacity}},'panel-opacity')}/>
+          <Range label="Panel width" value={s.panel.width} min={50} max={94} suffix="%" onChange={width=>change({panel:{...s.panel,width}},'panel-width')}/>
+          <Range label="Panel padding" value={s.panel.padding} min={12} max={80} onChange={padding=>change({panel:{...s.panel,padding}},'panel-padding')}/>
+          <Range label="Border width" value={s.panel.borderWidth} min={0} max={8} step={.5} onChange={borderWidth=>change({panel:{...s.panel,borderWidth}},'panel-border-width')}/>
+        </details>}
         <div className="divider"/>
         <div className="section-caption">Typography</div>
         <div className="segmented">{(['english','arabic'] as const).map(l=><button key={l} onClick={()=>setLanguage(l)} className={language===l?'active':''}>{l==='arabic'?'العربية':'English'}</button>)}</div>
-        <Field label="Font family"><select value={typography.font} onChange={e=>type({font:e.target.value})}><option>Inter</option><option>Noto Naskh Arabic</option></select></Field>
+        <Field label="Font family"><select aria-label={language+' caption font'} value={typography.font} onChange={e=>type({font:e.target.value})}>
+          {!FONT_CATALOG.some(font=>font.language===language&&font.family===typography.font)&&<option>{typography.font}</option>}
+          {FONT_CATALOG.filter(font=>font.language===language).map(font=><option key={font.id}>{font.family}</option>)}
+        </select></Field>
         <div className="field-row"><Field label="Size"><input type="number" min="18" max="110" value={typography.size} onChange={e=>type({size:Math.min(110,Math.max(18,+e.target.value))})}/></Field>
         <Field label="Text color"><div className="color-input"><input aria-label={language+' text color'} type="color" value={typography.color} onChange={e=>type({color:e.target.value})}/><span>{typography.color}</span></div></Field></div>
         <Toggle label="Bold text" checked={typography.bold} onChange={bold=>type({bold})}/>

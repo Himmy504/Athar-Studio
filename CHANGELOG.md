@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-09-05
+
+- Added selected-caption looping and replay, including captions ending at the source file's end.
+- Added pitch-preserving review speed from 0.5× to 2× without changing export timing.
+- Added review navigation and keyboard shortcuts, with approval flags and text-field editing respected.
+- Added waveform zoom, pan, fit-to-excerpt, and higher-resolution waveform preparation.
+- Expanded the offline font library to 10 Arabic and 12 English families with regular and bold weights. Normalized family sizing and mapped embedded font names for consistent native rendering.
+- Added seven customizable vector caption panels, including blue/gold and emerald plaques, parchment, and simpler boxes. Panels support wrapping, manual breaks, bilingual/English captions, fades, all three aspect ratios, and saved personal styles.
+- Preserved the compact editor layout and compatibility with existing project approvals.
+- Added automated playback, keyboard, zoom, font, and panel checks, plus comparisons between preview and FFmpeg rendering for every bundled font.
+
 ## 0.1.1 — 2026-09-05
 
 - Replaced the decorative interface with a compact charcoal workspace and a single application toolbar.

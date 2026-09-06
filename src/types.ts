@@ -15,10 +15,15 @@ export interface Typography {
   outline: number; shadow: number; spacing: number;
 }
 export type BackgroundKind = 'original' | 'solid' | 'gradient' | 'image' | 'video';
+export interface CaptionPanel {
+  preset: 'none' | 'solid' | 'glass' | 'gold' | 'paper' | 'emerald' | 'azure' | 'midnight';
+  fill: string; border: string; opacity: number; width: number; padding: number; borderWidth: number;
+}
 export interface Style {
   name: string; mode: 'english' | 'bilingual'; ratio: '9:16' | '1:1' | '16:9';
   arabic: Typography; english: Typography; alignment: 'left' | 'center' | 'right';
   captionY: number; lineGap: number; fade: boolean;
+  panel: CaptionPanel;
   background: { kind: BackgroundKind; color: string; color2: string; path: string; fit: 'cover' | 'contain'; dim: number; blur: number };
   showScholar: boolean; showSource: boolean; logoPath: string;
 }

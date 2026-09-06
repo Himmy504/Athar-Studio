@@ -2,7 +2,7 @@
 
 A Windows desktop editor for translated Arabic lecture clips. The workflow is import → select one excerpt → transcribe Arabic locally → manually translate with Gemini → review → style → export.
 
-This is a working **0.1.1 Windows pilot**, with real native transcription and rendering. It does not automatically upload audio, call a paid translation API, or publish content.
+This is a working **0.2.0 Windows pilot**, with real native transcription and rendering. It does not automatically upload audio, call a paid translation API, or publish content.
 
 ![Athar Studio editor showing synthetic sample captions](docs/images/editor.png)
 
@@ -29,18 +29,40 @@ The app downloads its speech model on demand, outside the installer. After insta
 ## What is implemented
 
 - Tauri 2 / React / TypeScript / Rust desktop workspace.
-- Local media probing, playback proxies, waveform, excerpt handles, and original audio preservation.
+- Local media probing, playback proxies, a zoomable/pannable waveform, excerpt handles, and original audio preservation.
+- Caption replay and looping, pitch-preserving 0.5×–2× review playback, and keyboard review controls.
 - whisper.cpp Arabic transcription; bundled CPU and Vulkan executables; automatic CPU fallback; visible device result.
 - Three downloadable multilingual models with SHA-256 verification, cancellable jobs, progress, and retry.
 - Versioned Gemini JSON handoff, exact request snapshots, stable segment IDs, atomic import, and repair prompts.
 - Original transcript preservation, independently detected Arabic changes, correction decisions, uncertainty resolution, and exact text/timing approvals.
 - Phrase timing, independent Arabic/English split positions, merge, word/phrase emphasis, manual line breaks, and readability suggestions.
-- English and bilingual modes; four presets; font size, weight, colors, outline, shadow, spacing, alignment, positioning, and fades.
+- English and bilingual modes; four caption style presets; 10 Arabic and 12 English font families, bundled offline with regular and bold weights; size, colors, outline, shadow, spacing, alignment, positioning, and fades.
+- Seven adjustable caption panels: Solid box, Smoked glass, Gold frame, Parchment, Emerald plaque, Azure plaque, and Midnight ribbon. Panels wrap around the caption text and can be saved in personal styles.
 - Source footage, solid/gradient/image/video backgrounds, crop/fit, dim, blur, source labels, and logos. Background video audio is never mixed in.
 - Vertical, square, and landscape 1080p H.264/AAC exports at 30 fps; Arabic and English SRT.
 - Shared ASS subtitle generation and matching TrueType font files for browser preview and FFmpeg/libass export.
 - Local project files with associated visual assets, autosave/recovery, backup copies, undo/redo, and source relinking.
 - Native export validation, one-heavy-job enforcement, cancellation, and completed-file publication.
+
+## Review controls
+
+Click a caption's time to play that phrase once. **Loop caption** repeats the selected phrase; previous/next moves the selection and plays it. Seeking outside a looping caption returns to excerpt playback. The speed setting affects review playback only; exported speech and caption timings retain their original speed.
+
+| Shortcut | Action |
+| --- | --- |
+| Space | Play / pause |
+| R | Replay selected caption |
+| L | Toggle caption looping |
+| ↑ / ↓ | Previous / next caption |
+| [ / ] | Slower / faster playback |
+| Ctrl + Enter | Approve selected caption and advance |
+| Esc | Leave a caption text field |
+
+Playback shortcuts are suspended while typing or using a dialog. Ctrl + Enter also works in the Arabic/English caption fields and respects unresolved correction and uncertainty flags. Space retains normal activation behavior on a focused button. **Help** lists these shortcuts in the app.
+
+Use the waveform magnifiers to zoom, the lower scrollbar to pan, the fit button to show the excerpt, and **All** to show the full source. Zoom and playback controls preserve approvals. Changing the excerpt still clears its captions after confirmation.
+
+Choose **Inspector → Captions → Caption panel** for decorative frames. Panel presets apply matching text colors and outlines; **Panel settings** exposes fill, border, opacity, width, and padding. All panel artwork is generated as vectors in the shared subtitle document. Old projects open with panels disabled. SRT files contain text and timing; panel styling is included in MP4 exports.
 
 ## Development
 

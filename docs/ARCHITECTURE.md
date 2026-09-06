@@ -43,6 +43,12 @@ Requests are invalidated by source, excerpt, glossary, text, structural, or timi
 
 The font preparation script decompresses the fontsource WOFF2 assets to TrueType. This is necessary because the Windows FFmpeg build does not support loading those WOFF2 fonts directly. Matching TrueType files are bundled for both caption renderers; CSS uses the corresponding WOFF2 for the editor itself.
 
+`fontCatalog.json` records the 22 bundled families, subset files, embedded family names, and Windows ascent/descent metrics. Asset preparation checks those metrics against the installed font files. `fontSizing.ts` converts CSS/em measurements to libass font sizes while preserving the original Inter/Noto Naskh sizing. Embedded family names can differ from the names shown in the inspector. Only the selected families and fallbacks are loaded into the preview worker.
+
+`captionLayout.ts` measures loaded fonts, wraps at words or grapheme boundaries, retains original text offsets for emphasis, and centers visible glyphs within each panel. `panelDrawing.ts` generates the original vector frames and subtle plaque texture as ASS drawing events behind the text. The same measured ASS string is passed to native export; MP4 export waits for font loading. Existing documents and saved styles receive a default `panel.preset: none` during parsing.
+
+`useReviewPlayback.ts` owns the source media clock, selected caption, loop bounds, rate, and playback events. Playback controls never update the project document or approval snapshots. `ClipStrip.tsx` maps the zoomed source-time window to waveform bars and excerpt handles; media preparation retains up to 16,384 envelope peaks and the UI renders at most 1,000 visible bars.
+
 Rust composes the background, optional logo, and subtitles, maps only the source audio, encodes H.264/AAC, then atomically publishes the completed file. A neutral audio-only project defaults to a gradient. Footage is selectable only when source video exists.
 
 ## Persistence and runtime

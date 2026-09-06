@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { AlertCircle, Check, CheckCheck, ChevronDown, ChevronUp, Copy, ExternalLink, FileInput, Languages, Merge, Play, Plus, Scissors, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, Check, CheckCheck, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Copy, ExternalLink, FileInput, Languages, Merge, Play, Plus, Scissors, Trash2 } from 'lucide-react';
 import { approve, arabicDifference, editSegment, formatTime, isApproved, isCorrected, mergeSegment, needsResolution, newSegment, resolveCorrection, splitSegment } from './domain';
 import { Field, Modal } from './components';
 import type { Project, Segment } from './types';
 
-export function ReviewPanel({project:p,update,onSeek,onPrompt,onPaste,onGemini,onTranscribe,busy,notify}:{
-  project:Project; update:(fn:(p:Project)=>Project,key?:string)=>void;onSeek:(n:number)=>void;onPrompt:()=>void;onPaste:()=>void;onGemini:()=>void;onTranscribe:()=>void;busy:boolean;notify:(s:string)=>void;
+export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavigate,onPrompt,onPaste,onGemini,onTranscribe,busy,notify}:{
+  project:Project; update:(fn:(p:Project)=>Project,key?:string)=>void;selectedId:string|null;onSelect:(id:string)=>void;onPlay:(id:string)=>void;onNavigate:(delta:number)=>void;onPrompt:()=>void;onPaste:()=>void;onGemini:()=>void;onTranscribe:()=>void;busy:boolean;notify:(s:string)=>void;
 }){
   const [filter,setFilter]=useState<'all'|'review'|'approved'>('all'),[expanded,setExpanded]=useState<string|null>(null),[split,setSplit]=useState<Segment|null>(null);
   const approved=p.segments.filter(isApproved).length, flagged=p.segments.filter(needsResolution).length;
@@ -18,8 +18,13 @@ export function ReviewPanel({project:p,update,onSeek,onPrompt,onPaste,onGemini,o
     update(v=>({...v,segments:[...v.segments,segment],request:null}));setExpanded(segment.id);
   };
   const filtered=p.segments.filter(s=>filter==='all'||(filter==='approved'?isApproved(s):!isApproved(s)));
+  useEffect(()=>{
+    if(!selectedId)return;
+    if(!filtered.some(s=>s.id===selectedId)){setFilter('all');return;}
+    document.querySelector('[data-caption-id="'+CSS.escape(selectedId)+'"]')?.scrollIntoView({block:'nearest'});
+  },[selectedId,filter]);
   return <section className="review-panel">
-    <div className="review-heading"><h2>Captions</h2>{p.segments.length>0&&<span className="review-count">{approved}/{p.segments.length} approved{flagged>0&&<span className="flag-count"> · {flagged} flagged</span>}</span>}</div>
+    <div className="review-heading"><h2>Captions</h2><div className="review-navigation">{p.segments.length>0&&<span className="review-count">{approved}/{p.segments.length} approved{flagged>0&&<span className="flag-count"> · {flagged} flagged</span>}</span>}<button className="icon-button" aria-label="Previous caption" title="Previous caption (↑)" disabled={busy||!p.segments.length||selectedId===p.segments[0]?.id} onClick={()=>onNavigate(-1)}><ChevronLeft size={15}/></button><button className="icon-button" aria-label="Next caption" title="Next caption (↓)" disabled={busy||!p.segments.length||selectedId===p.segments.at(-1)?.id} onClick={()=>onNavigate(1)}><ChevronRight size={15}/></button></div></div>
     <div className="translation-actions">
       <button onClick={onPrompt} disabled={busy||!p.segments.length}><Copy size={15}/><span>Copy prompt</span></button>
       <button onClick={onGemini}><ExternalLink size={15}/><span>Open Gemini</span></button>
@@ -31,8 +36,8 @@ export function ReviewPanel({project:p,update,onSeek,onPrompt,onPaste,onGemini,o
       filtered.length===0?<div className="empty-filter"><CheckCheck size={30}/><p>{filter==='review'?'All captions approved.':'No matching captions.'}</p></div>:
       filtered.map(s=>{
         const i=p.segments.findIndex(v=>v.id===s.id),open=expanded===s.id,checked=isApproved(s);
-        return <article key={s.id} className={'caption-card '+(open?'expanded ':'')+(checked?'approved':'')}>
-          <div className="caption-top"><button className="caption-time" onClick={()=>onSeek(s.start)} aria-label={'Play caption '+(i+1)}><Play size={11}/><span>{String(i+1).padStart(2,'0')}</span><b>{formatTime(s.start)} – {formatTime(s.end)}</b></button>
+        return <article key={s.id} data-caption-id={s.id} aria-current={selectedId===s.id?'true':undefined} onFocusCapture={()=>onSelect(s.id)} onClick={()=>onSelect(s.id)} className={'caption-card '+(open?'expanded ':'')+(selectedId===s.id?'selected ':'')+(checked?'approved':'')}>
+          <div className="caption-top"><button className="caption-time" onClick={()=>onPlay(s.id)} aria-label={'Play caption '+(i+1)}><Play size={11}/><span>{String(i+1).padStart(2,'0')}</span><b>{formatTime(s.start)} – {formatTime(s.end)}</b></button>
             <div className="caption-badges">{isCorrected(s)&&<span className={'correction-badge '+(s.correctionResolved?'resolved':'')}>AI-corrected Arabic</span>}
             <button className="icon-button" aria-label={(open?'Collapse':'Expand')+' caption '+(i+1)} onClick={()=>setExpanded(open?null:s.id)}>{open?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button></div>
           </div>
