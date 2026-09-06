@@ -179,7 +179,7 @@ export default function App(){
   return <div className="app-shell">
     <input type="file" ref={fileInput} accept=".athar,.json,.bak" hidden onChange={async e=>{const file=e.target.files?.[0];if(file)try{replace(parseProject(await file.text()));setTime(0);}catch(err){notify(String(err));}e.target.value='';}}/>
     <header className="topbar">
-      <strong className="brand">Athar Studio</strong>
+      <strong className="brand"><img src="/app-icon.png" alt="" width="24" height="24"/>Athar Studio</strong>
       <div className="topbar-divider"/>
       <div className="file-actions">
         <button className="icon-button" aria-label="New project" title="New project" disabled={busy} onClick={()=>setDialog('new')}><FilePlus2 size={16}/></button>
