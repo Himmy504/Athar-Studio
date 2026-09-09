@@ -51,6 +51,9 @@ svg { flex-shrink: 0; }
 .topbar { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 14px; flex-shrink: 0; background: #292a2e; border-bottom: 1px solid #111214; }
 .brand { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; white-space: nowrap; padding-right: 4px; }
 .brand img { display: block; flex: none; object-fit: contain; }
+.inspector-section-title { display: flex; align-items: center; justify-content: space-between; }
+.inspector-section-title .text-button { font-size: 11px; text-transform: none; letter-spacing: normal; }
+.type-effects, .position-shortcuts { margin-bottom: 12px; }
 .topbar-divider { width: 1px; height: 22px; background: #44464c; flex-shrink: 0; }
 .file-actions, .topbar-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
 .file-actions .topbar-divider { margin: 0 6px; }

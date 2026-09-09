@@ -29,7 +29,9 @@ pub fn run(app:&AppHandle,input:&str)->Result<Value,String>{
     if saved!=opened{return Err("Project roundtrip failed".into());}
     let recovered=storage::recover(app)?.ok_or("Recovery missing")?;
     if recovered["raw"]!=saved||recovered["path"]!=save_path.to_string_lossy().as_ref(){return Err("Saved project recovery failed".into());}
+    let render_started=Instant::now();
     render::export(app,&project,&ass,Path::new(output),"mp4",&guard.job)?;
+    let render_seconds=render_started.elapsed().as_secs_f64();
     let video_probe=media::probe(app,Path::new(output),&guard.job)?;
     let srt_path=Path::new(output).with_extension("srt");
     render::export(app,&project,&ass,&srt_path,"srt-english",&guard.job)?;
@@ -50,6 +52,7 @@ pub fn run(app:&AppHandle,input:&str)->Result<Value,String>{
         variant["style"]["background"]["blur"]=json!(blur);
         variant["style"]["background"]["path"]=json!(if kind=="image"{logo.to_string_lossy().into_owned()}else{output.to_string()});
         variant["style"]["logoPath"]=json!(logo);
+        variant["exportSettings"]=json!({"resolution":720,"fps":25,"speed":"balanced"});
         if kind=="original"{
             variant["media"]=serde_json::to_value(media::import(app,output,&guard.job)?).map_err(|e|e.to_string())?;
             variant["clip"]=json!({"start":0,"end":6});
@@ -59,13 +62,31 @@ pub fn run(app:&AppHandle,input:&str)->Result<Value,String>{
         render::export(app,&variant,&ratio_ass,&output,"mp4",&guard.job)?;
         variations.push(json!({"name":name,"probe":media::probe(app,&output,&guard.job)?}));
     }
+    let mut export_profiles=vec![];
+    for (resolution,fps,speed) in [(720,24,"quick"),(720,25,"balanced"),(1080,30,"quality")] {
+        let mut variant=project.clone();
+        variant["exportSettings"]=json!({"resolution":resolution,"fps":fps,"speed":speed});
+        let path=work.join(format!("export-{}-{}-{}.mp4",resolution,fps,speed));
+        let started=Instant::now();
+        render::export(app,&variant,&ass,&path,"mp4",&guard.job)?;
+        let elapsed=started.elapsed().as_secs_f64();
+        let probe=media::probe(app,&path,&guard.job)?;
+        let streams=probe["streams"].as_array().ok_or("Export streams missing")?;
+        let video=streams.iter().find(|s|s["codec_type"]=="video").ok_or("Video stream missing")?;
+        if video["width"]!=resolution||video["height"]!=resolution*16/9||video["r_frame_rate"]!=format!("{}/1",fps) {return Err("Export dimensions/frame rate differ from selected profile".into());}
+        if !streams.iter().any(|s|s["codec_type"]=="audio"&&s["codec_name"]=="aac"){return Err("Lecture audio missing in exported profile".into());}
+        let duration=probe["format"]["duration"].as_str().and_then(|v|v.parse::<f64>().ok()).ok_or("Export duration missing")?;
+        let expected=project["clip"]["end"].as_f64().unwrap()-project["clip"]["start"].as_f64().unwrap();
+        if (duration-expected).abs()>0.1 {return Err("Export profile changed excerpt duration".into());}
+        export_profiles.push(json!({"resolution":resolution,"fps":fps,"speed":speed,"seconds":elapsed,"probe":probe}));
+    }
     let mut pending=project.clone();pending["segments"][0]["english"]=json!("Unapproved replacement");
     if render::validate(&pending).is_ok(){return Err("Export approval gate failed".into());}
     guard.job.cancelled.store(true,Ordering::Relaxed);
     let cancel_path=Path::new(output).with_file_name("must-not-exist.mp4");
     if render::export(app,&project,&ass,&cancel_path,"mp4",&guard.job).is_ok()||cancel_path.exists(){return Err("Cancellation published an output".into());}
     guard.job.cancelled.store(false,Ordering::Relaxed);
-    let mut report=json!({"ok":true,"projectRoundtrip":true,"savedPathRecovery":true,"assetRoundtrip":true,"concurrentJobGate":true,"unapprovedExportBlocked":true,"cancelledExportNotPublished":true,"cancelledModelDownloadSeconds":cancellation_seconds,"video":video_probe,"srt":srt_path,"variations":variations,"transcription":null});
+    let mut report=json!({"ok":true,"projectRoundtrip":true,"savedPathRecovery":true,"assetRoundtrip":true,"concurrentJobGate":true,"unapprovedExportBlocked":true,"cancelledExportNotPublished":true,"cancelledModelDownloadSeconds":cancellation_seconds,"renderSeconds":render_seconds,"exportProfiles":export_profiles,"video":video_probe,"srt":srt_path,"variations":variations,"transcription":null});
     let sample=Path::new(input).with_file_name("arabic-example.wav");
     if sample.exists()&&config["skipTranscription"]!=true{
         let model="large-v3-turbo-q5_0";

@@ -50,12 +50,12 @@ export function generateAss(p: Project) {
   const alignment = st.alignment === 'left' ? 1 : st.alignment === 'right' ? 3 : 2;
   const x = alignment === 1 ? 80 : alignment === 3 ? w - 80 : w / 2;
   const y = Math.round(h * st.captionY / 100);
-  const style = (name: string, t: Typography) => 'Style: ' + [name, assFontFamily(t.font).replace(/,/g, ''), assFontSize(t,name==='Arabic'?'arabic':'english'), assColor(t.color), assColor(t.color), '&H00101916', '&H80000000', t.bold ? -1 : 0, 0, 0, 0, 100, 100, t.spacing, 0, 1, t.outline, t.shadow, 2, 80, 80, 80, 1].join(',');
+  const style = (name: string, t: Typography) => 'Style: ' + [name, assFontFamily(t.font).replace(/,/g, ''), assFontSize(t,name==='Arabic'?'arabic':'english'), assColor(t.color), assColor(t.color), assColor(t.outlineColor ?? '#161910'), assColor(t.shadowColor ?? '#000000').replace('&H00','&H80'), t.bold ? -1 : 0, t.italic ? -1 : 0, t.underline ? -1 : 0, 0, 100, 100, t.spacing, 0, 1, t.outline, t.shadow, 2, 80, 80, 80, 1].join(',');
   const header = [
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: ' + w, 'PlayResY: ' + h, 'WrapStyle: 0', 'ScaledBorderAndShadow: yes', '',
     '[V4+ Styles]', 'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
     style('English', st.english), style('Arabic', st.arabic),
-    style('Label', { ...st.english, size: 30, color: '#E9DCB9', bold: false, outline: 1, spacing: 1 }), '',
+    style('Label', { ...st.english, size: 30, color: '#E9DCB9', bold: false, italic: false, underline: false, outline: 1, spacing: 1 }), '',
     '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
   ];
   const line = (start: number, end: number, name: string, text: string, layer=1) => 'Dialogue: '+layer+',' + assTime(start) + ',' + assTime(end) + ',' + name + ',,0,0,0,,' + text;
@@ -88,6 +88,10 @@ export function captionWarnings(p: Project): string[] {
     const warnings = [];
     if(p.style.panel.preset!=='none'&&panelLayout(p.style,s,w,h).height>h-40)warnings.push('Caption '+(i+1)+' is too tall for its panel. Split it, widen the panel, or reduce the font size.');
     if (p.style.panel.preset==='none'&&lines * p.style.english.size * 1.35 + h * p.style.captionY / 100 > h - 100) warnings.push('Caption ' + (i + 1) + ' may extend beyond the safe area. Split it or reduce the text size.');
+    if(p.style.panel.preset==='none'&&p.style.mode==='bilingual'){
+      const arabicLines=s.arabic.split('\n').reduce((n,l)=>n+Math.max(1,Math.ceil(l.length*p.style.arabic.size*.55/(w-160))),0);
+      if(h*p.style.captionY/100-p.style.lineGap-arabicLines*p.style.arabic.size*1.35<40)warnings.push('Caption '+(i+1)+' Arabic may extend above the safe area. Move it down, split it, or reduce its size.');
+    }
     if (s.english.length / duration > 23) warnings.push('Caption ' + (i + 1) + ' may read too quickly. Review its timing or split the phrase.');
     return warnings;
   });

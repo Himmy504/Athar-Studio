@@ -29,9 +29,20 @@ fn color(hex: &str) -> Result<[u8;3], String> {
     if hex.len() != 7 || !hex.starts_with('#') || !hex[1..].bytes().all(|c| c.is_ascii_hexdigit()) { return Err("Invalid background color".into()); }
     Ok([u8::from_str_radix(&hex[1..3],16).unwrap(),u8::from_str_radix(&hex[3..5],16).unwrap(),u8::from_str_radix(&hex[5..7],16).unwrap()])
 }
-fn dimensions(p: &Value) -> Result<(u32,u32),String> {
+#[derive(Debug, PartialEq)]
+struct ExportSettings { resolution: u32, fps: u32, preset: &'static str, crf: &'static str }
+fn export_settings(p: &Value) -> Result<ExportSettings,String> {
+    let settings=&p["exportSettings"];
+    if settings.is_null() { return Ok(ExportSettings { resolution:1080, fps:30, preset:"veryfast", crf:"20" }); }
+    let resolution=match settings["resolution"].as_u64() {Some(720)=>720,Some(1080)=>1080,_=>return Err("Choose 720p or 1080p for export".into())};
+    let fps=match settings["fps"].as_u64() {Some(24)=>24,Some(25)=>25,Some(30)=>30,_=>return Err("Choose 24, 25, or 30 fps for export".into())};
+    let (preset,crf)=match settings["speed"].as_str() {Some("quality")=>("fast","20"),Some("balanced")=>("veryfast","20"),Some("quick")=>("ultrafast","23"),_=>return Err("Unknown export encoding preset".into())};
+    Ok(ExportSettings {resolution,fps,preset,crf})
+}
+fn dimensions(p: &Value, resolution:u32) -> Result<(u32,u32),String> {
+    let long=resolution*16/9;
     match p["style"]["ratio"].as_str() {
-        Some("9:16") => Ok((1080,1920)), Some("1:1") => Ok((1080,1080)), Some("16:9") => Ok((1920,1080)), _ => Err("Invalid export aspect ratio".into())
+        Some("9:16") => Ok((resolution,long)), Some("1:1") => Ok((resolution,resolution)), Some("16:9") => Ok((long,resolution)), _ => Err("Invalid export aspect ratio".into())
     }
 }
 pub fn srt(p: &Value, lang: &str) -> Result<String,String> {
@@ -53,6 +64,7 @@ pub fn export(app: &AppHandle, p: &Value, ass: &str, dest: &Path, format: &str, 
         jobs::report(app,job,100.0,"Subtitles exported"); return Ok(());
     }
     if format != "mp4" { return Err("Unknown export format".into()); }
+    let settings=export_settings(p)?;
     if ass.len()>2_000_000 || !ass.starts_with("[Script Info]") { return Err("Invalid caption render document".into()); }
     let source=p["media"]["path"].as_str().ok_or("No source media")?;
     if !Path::new(source).is_file() { return Err("Source media is missing. Relink it before exporting.".into()); }
@@ -65,9 +77,12 @@ pub fn export(app: &AppHandle, p: &Value, ass: &str, dest: &Path, format: &str, 
     for entry in fs::read_dir(storage::resources(app)?.join("fonts")).map_err(|e|format!("Bundled fonts missing: {}",e))? {
         let entry=entry.map_err(|e|e.to_string())?;
         if entry.path().extension().and_then(|e|e.to_str())!=Some("ttf"){continue;}
-        fs::copy(entry.path(),fonts.join(entry.file_name())).map_err(|e|e.to_string())?;
+        let dest=fonts.join(entry.file_name());
+        if fs::hard_link(entry.path(),&dest).is_err() { fs::copy(entry.path(),&dest).map_err(|e|e.to_string())?; }
     }
-    let (w,h)=dimensions(p)?; let bg=&p["style"]["background"];
+    let (w,h)=dimensions(p,settings.resolution)?; let bg=&p["style"]["background"];
+    let fps=settings.fps.to_string();
+    let scale=settings.resolution as f64/1080.0;
     let kind=bg["kind"].as_str().unwrap_or("");
     let start=number(&p["clip"],"start")?; let duration=number(&p["clip"],"end")?-start;
     let mut args=vec!["-y".into(),"-nostdin".into(),"-v".into(),"error".into(),"-progress".into(),"pipe:2".into(),"-ss".into(),start.to_string(),"-i".into(),source.into()];
@@ -84,13 +99,13 @@ pub fn export(app: &AppHandle, p: &Value, ass: &str, dest: &Path, format: &str, 
                 image::Rgb(std::array::from_fn(|i| ((c1[i] as f32)*(1.0-ratio)+(c2[i] as f32)*ratio).round() as u8))
             });
             image.save(work.path().join("background.png")).map_err(|e|e.to_string())?;
-            args.extend(["-loop","1","-framerate","30","-i","background.png"].map(String::from));
+            args.extend(["-loop","1","-framerate",&fps,"-i","background.png"].map(String::from));
             input_index=1;
         },
         "image" | "video" => {
             let path=bg["path"].as_str().filter(|s|!s.is_empty()).ok_or("Select a background file")?;
             if !Path::new(path).is_file() {return Err("The background file is missing. Select it again.".into());}
-            if kind=="image" {args.extend(["-loop","1","-framerate","30"].map(String::from));}
+            if kind=="image" {args.extend(["-loop","1","-framerate",&fps].map(String::from));}
             else {args.extend(["-stream_loop","-1"].map(String::from));}
             args.extend(["-i".into(),path.into()]); input_index=1;
         },
@@ -103,21 +118,24 @@ pub fn export(app: &AppHandle, p: &Value, ass: &str, dest: &Path, format: &str, 
         Some("contain")=>format!("scale={}:{}:force_original_aspect_ratio=decrease,pad={}:{}:(ow-iw)/2:(oh-ih)/2:black,setsar=1",w,h,w,h),
         _=>return Err("Invalid background fit".into()),
     };
-    let mut graph=format!("[{}:v:0]setpts=PTS-STARTPTS,{},fps=30",input_index,fit);
-    if blur>0.0 {graph.push_str(&format!(",gblur=sigma={}",blur));}
+    let mut graph=format!("[{}:v:0]setpts=PTS-STARTPTS,fps={},{}",input_index,fps,fit);
+    if blur>0.0 {graph.push_str(&format!(",gblur=sigma={}",blur*scale));}
     if dim>0.0 {graph.push_str(&format!(",drawbox=color=black@{}:t=fill",dim/100.0));}
+    // Cache the treated still frame before compositing time-dependent captions and branding.
+    if matches!(kind,"solid"|"gradient"|"image") {graph.push_str(&format!(",loop=loop=-1:size=1:start=0,setpts=N/({}*TB)",fps));}
     graph.push_str("[background];");
     let logo=p["style"]["logoPath"].as_str().unwrap_or("");
     if !logo.is_empty() {
         if !Path::new(logo).is_file() {return Err("The channel logo is missing. Select it again.".into());}
         let index=if input_index==0 {1} else {2};
-        args.extend(["-loop".into(),"1".into(),"-i".into(),logo.into()]);
-        graph.push_str(&format!("[{}:v:0]scale=100:100:force_original_aspect_ratio=decrease,format=rgba[logo];[background][logo]overlay=W-w-60:60:shortest=1[branded];[branded]",index));
+        args.extend(["-loop".into(),"1".into(),"-framerate".into(),fps.clone(),"-i".into(),logo.into()]);
+        let logo_size=(100.0*scale).round() as u32; let margin=(60.0*scale).round() as u32;
+        graph.push_str(&format!("[{}:v:0]scale={}:{}:force_original_aspect_ratio=decrease,format=rgba[logo];[background][logo]overlay=W-w-{}:{}:shortest=1[branded];[branded]",index,logo_size,logo_size,margin,margin));
     } else {graph.push_str("[background]");}
     graph.push_str("ass=filename=captions.ass:fontsdir=fonts,format=yuv420p[out]");
     args.extend(["-filter_complex".into(),graph,"-map".into(),"[out]".into(),"-map".into(),"0:a:0".into(),"-t".into(),duration.to_string(),
-        "-c:v".into(),"libx264".into(),"-preset".into(),"fast".into(),"-crf".into(),"20".into(),"-r".into(),"30".into(),"-c:a".into(),"aac".into(),"-b:a".into(),"192k".into(),
-        "-af".into(),"asetpts=PTS-STARTPTS".into(),"-movflags".into(),"+faststart".into(),"-threads".into(),"4".into(),output.path().to_string_lossy().into()]);
+        "-c:v".into(),"libx264".into(),"-preset".into(),settings.preset.into(),"-crf".into(),settings.crf.into(),"-r".into(),fps,"-c:a".into(),"aac".into(),"-b:a".into(),"192k".into(),
+        "-af".into(),"asetpts=PTS-STARTPTS".into(),"-movflags".into(),"+faststart".into(),"-threads".into(),std::thread::available_parallelism().map(|n|n.get().min(8)).unwrap_or(4).to_string(),output.path().to_string_lossy().into()]);
     jobs::process(&storage::binary(app,"ffmpeg")?,&args,Some(work.path()),app,job,duration,"Rendering your clip")?;
     jobs::check(job)?;
     if output.as_file().metadata().map_err(|e|e.to_string())?.len()==0 {return Err("The renderer produced an empty file".into());}
@@ -150,5 +168,23 @@ mod tests {
     }
     #[test] fn srt_uses_excerpt_relative_timing() {
         assert!(srt(&project(),"english").unwrap().contains("00:00:00,000 --> 00:00:06,000"));
+    }
+    #[test] fn legacy_and_selected_export_settings() {
+        assert_eq!(export_settings(&project()).unwrap(),ExportSettings{resolution:1080,fps:30,preset:"veryfast",crf:"20"});
+        for resolution in [720,1080] { for fps in [24,25,30] { for (speed,preset,crf) in [("quality","fast","20"),("balanced","veryfast","20"),("quick","ultrafast","23")] {
+            let mut p=project();p["exportSettings"]=serde_json::json!({"resolution":resolution,"fps":fps,"speed":speed});
+            assert_eq!(export_settings(&p).unwrap(),ExportSettings{resolution,fps,preset,crf});
+        } } }
+    }
+    #[test] fn invalid_settings_fail_before_rendering() {
+        for settings in [serde_json::json!({"resolution":480,"fps":30,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":60,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":30,"speed":"-bad"})] {
+            let mut p=project();p["exportSettings"]=settings;assert!(export_settings(&p).is_err());
+        }
+    }
+    #[test] fn output_dimensions_follow_resolution_and_ratio() {
+        let mut p=project();
+        for (ratio,expected) in [("9:16",(720,1280)),("1:1",(720,720)),("16:9",(1280,720))] {
+            p["style"]=serde_json::json!({"ratio":ratio});assert_eq!(dimensions(&p,720).unwrap(),expected);
+        }
     }
 }
