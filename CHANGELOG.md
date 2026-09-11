@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 Beta 1 — 2026-09-11
+
+- Increased caption font sizes to 300, with italic, underline, outline/shadow colors, and wider effect ranges.
+- Added per-language typography reset and top/middle/bottom caption positioning shortcuts.
+- Fixed the desktop Gemini button's URL permission.
+- Added 720p/1080p export, 24/25/30 fps, and Quality, Balanced, and Quick draft encoding presets. Export choices are saved with the project.
+- Cached static background effects, reduced frames before expensive filters, and reused local font files during export. Balanced encoding is now the default.
+
+
 ## 0.2.0 — 2026-09-05
 
 - Added selected-caption looping and replay, including captions ending at the source file's end.

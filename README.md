@@ -14,14 +14,14 @@ Select a passage, transcribe the Arabic, review a translation, and style the fin
 - Manual Gemini translation through copy and paste, with a terminology glossary.
 - Side-by-side Arabic and English review, correction history, and individual caption approvals.
 - Caption looping, adjustable playback speed, keyboard shortcuts, and waveform zoom.
-- English-only or bilingual captions, 22 font families, decorative panels, and reusable styles.
+- English-only or bilingual captions, 22 font families, sizes up to 300, text effects, decorative panels, and reusable styles.
 - Footage, image, video, solid-color, and gradient backgrounds with source labels and channel branding.
-- Vertical, square, and landscape 1080p MP4 exports, plus Arabic and English SRT files.
+- Vertical, square, and landscape MP4 exports at 720p or 1080p, with 24/25/30 fps and encoding speed choices, plus Arabic and English SRT files.
 - Local projects with autosave, recovery, undo/redo, and source relinking.
 
 ## Getting started
 
-Athar Studio is currently a **Windows x64 beta (0.2.0)**. Beta testers receive the installer from the maintainer. Speech models download separately inside the app.
+Athar Studio is currently a **Windows x64 beta (0.3.0)**. Speech models download separately inside the app.
 
 1. Import an audio or video file and select an excerpt.
 2. Download a speech model and transcribe the Arabic.

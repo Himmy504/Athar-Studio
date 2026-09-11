@@ -14,11 +14,13 @@ import { ClipStrip } from './ClipStrip';
 import { useReviewPlayback } from './useReviewPlayback';
 import { PLAYBACK_RATES } from './playback';
 import { useCaptionFonts } from './fonts';
-import type { Device, Progress, Project, RuntimeStatus } from './types';
+import { DEFAULT_EXPORT, EXPORT_SPEEDS } from './exportSettings';
+import type { Device, ExportSettings, Progress, Project, RuntimeStatus } from './types';
 
 type Dialog = 'translate'|'models'|'glossary'|'export'|'help'|'new'|'retranscribe'|null;
 export default function App(){
   const store=useProject(),{project:p,update,replace,path,setPath,status,undo,redo,canUndo,canRedo,persist}=store;
+  const exportSettings=p.exportSettings??DEFAULT_EXPORT;
   const [dialog,setDialog]=useState<Dialog>(null),[notice,setNotice]=useState(''),[job,setJob]=useState<Progress|null>(null);
   const [runtime,setRuntime]=useState<RuntimeStatus|null>(null),[model,setModel]=useState(()=>localStorage.getItem('athar-model')||'large-v3-turbo-q5_0');
   const [device,setDevice]=useState<Device>(()=>localStorage.getItem('athar-device')==='cpu'?'cpu':'auto'),[lastDevice,setLastDevice]=useState('Auto');
@@ -230,9 +232,16 @@ export default function App(){
     {dialog==='export'&&<Modal title={exported?'Export complete':'Export'} onClose={()=>setDialog(null)}>
       {job&&<ModalJob job={job} notify={notify}/>}
       {exported?<div className="export-success"><div><CheckCheck size={36}/></div><p>{exported.split(/[\\/]/).pop()}</p><button className="primary-button" onClick={()=>void showFile(exported).catch(e=>notify(String(e)))}><FolderOpen size={16}/>Show in folder</button></div>:<>
-        <div className="export-summary"><span><CheckCheck size={22}/><strong>{approved} / {p.segments.length}</strong> approved captions</span><span><Monitor size={22}/><strong>{p.style.ratio}</strong> 1080p · 30 fps</span></div>
+        <div className="export-summary"><span><CheckCheck size={22}/><strong>{approved} / {p.segments.length}</strong> approved captions</span>{exportFormat==='mp4'&&<span><Monitor size={22}/><strong>{p.style.ratio}</strong> {exportSettings.resolution}p · {exportSettings.fps} fps</span>}</div>
         <Field label="Format"><select value={exportFormat} onChange={e=>setExportFormat(e.target.value)} disabled={busy}><option value="mp4">MP4 video · captions burned in</option><option value="srt-english">English subtitles · SRT</option><option value="srt-arabic">Arabic subtitles · SRT</option></select></Field>
-        <Field label="Aspect ratio"><select value={p.style.ratio} onChange={e=>edit(v=>({...v,style:{...v.style,ratio:e.target.value as Project['style']['ratio']}}))} disabled={busy}><option value="9:16">Vertical · 9:16</option><option value="1:1">Square · 1:1</option><option value="16:9">Landscape · 16:9</option></select></Field>
+        {exportFormat==='mp4'&&<>
+          <Field label="Aspect ratio"><select value={p.style.ratio} onChange={e=>edit(v=>({...v,style:{...v.style,ratio:e.target.value as Project['style']['ratio']}}))} disabled={busy}><option value="9:16">Vertical · 9:16</option><option value="1:1">Square · 1:1</option><option value="16:9">Landscape · 16:9</option></select></Field>
+          <div className="field-row">
+            <Field label="Resolution"><select value={exportSettings.resolution} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),resolution:Number(e.target.value) as ExportSettings['resolution']}}))}><option value="1080">1080p · Full HD</option><option value="720">720p · Faster export</option></select></Field>
+            <Field label="Frame rate"><select value={exportSettings.fps} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),fps:Number(e.target.value) as ExportSettings['fps']}}))}>{[24,25,30].map(fps=><option key={fps} value={fps}>{fps} fps</option>)}</select></Field>
+          </div>
+          <Field label="Encoding" hint={EXPORT_SPEEDS[exportSettings.speed].hint}><select value={exportSettings.speed} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),speed:e.target.value as ExportSettings['speed']}}))}>{Object.entries(EXPORT_SPEEDS).map(([id,speed])=><option key={id} value={id}>{speed.label}</option>)}</select></Field>
+        </>}
         {errors.length>0&&<div className="inline-warning"><strong>Before you export</strong><ul>{errors.slice(0,5).map(e=><li key={e}>{e}</li>)}</ul></div>}
         {warnings.length>0&&<details className="readability"><summary>{warnings.length} readability suggestion{warnings.length===1?'':'s'}</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
         <label className="approval-confirm"><input type="checkbox" checked={exportConfirmed} onChange={e=>setExportConfirmed(e.target.checked)} disabled={busy}/><span>I reviewed the final Arabic, translation, and caption timings against the audio.</span></label>

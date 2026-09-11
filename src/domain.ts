@@ -2,8 +2,9 @@ import { z } from 'zod';
 import type { Project, Segment, Style, TranslationRequest } from './types';
 import catalog from './fontCatalog.json';
 import { createPanel } from './panelPresets';
+import { DEFAULT_EXPORT, exportSettingsSchema } from './exportSettings';
 
-const typeStyle = (size: number, color = '#FFFFFF') => ({ font: 'Inter', size, bold: false, color, outline: 2, shadow: 1, spacing: 0 });
+const typeStyle = (size: number, color = '#FFFFFF') => ({ font: 'Inter', size, bold: false, italic: false, underline: false, color, outline: 2, shadow: 1, spacing: 0, outlineColor: '#161910', shadowColor: '#000000' });
 export const presets: Record<string, Style> = {
   Clean: {
     name: 'Clean', mode: 'english', ratio: '9:16', english: typeStyle(54), arabic: { ...typeStyle(65, '#E9DCB9'), font: 'Noto Naskh Arabic' },
@@ -21,7 +22,7 @@ export function newProject(): Project {
   const now = new Date().toISOString();
   return { schemaVersion: 1, id: crypto.randomUUID(), name: 'Untitled clip', createdAt: now, updatedAt: now, media: null,
     clip: { start: 0, end: 0 }, metadata: { scholar: '', lecture: '', source: '', channel: '' },
-    segments: [], style: structuredClone(presets.Bilingual), glossary: [], request: null, imports: [] };
+    segments: [], style: structuredClone(presets.Bilingual), exportSettings: { ...DEFAULT_EXPORT }, glossary: [], request: null, imports: [] };
 }
 export function applySavedAssets(current:Project,snapshot:Project,saved:Project):Project{
   if(current.id!==snapshot.id)return current;
@@ -154,7 +155,7 @@ export function mergeSegment(p: Project, id: string): Project {
     correctionNote: [a.correctionNote, b.correctionNote].filter(Boolean).join(' '), approval: null, emphasis: [] }, ...p.segments.slice(i + 2)] };
 }
 
-const typographySchema = z.object({ font: z.string().refine(name=>catalog.some(font=>font.family===name),'Choose a bundled caption font'), size: z.number().min(18).max(110), bold: z.boolean(), color: z.string().regex(/^#[0-9a-f]{6}$/i), outline: z.number().min(0).max(8), shadow: z.number().min(0).max(10), spacing: z.number().min(-3).max(12) });
+const typographySchema = z.object({ font: z.string().refine(name=>catalog.some(font=>font.family===name),'Choose a bundled caption font'), size: z.number().min(18).max(300), bold: z.boolean(), italic: z.boolean().default(false), underline: z.boolean().default(false), color: z.string().regex(/^#[0-9a-f]{6}$/i), outlineColor: z.string().regex(/^#[0-9a-f]{6}$/i).default('#161910'), shadowColor: z.string().regex(/^#[0-9a-f]{6}$/i).default('#000000'), outline: z.number().min(0).max(16), shadow: z.number().min(0).max(20), spacing: z.number().min(-3).max(20) });
 const colorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
 export const styleSchema = z.object({
   name: z.string(), mode: z.enum(['english', 'bilingual']), ratio: z.enum(['9:16', '1:1', '16:9']), arabic: typographySchema, english: typographySchema,
@@ -174,6 +175,7 @@ const projectSchema = z.object({
   media: z.object({ path: z.string(), name: z.string(), duration: z.number().positive(), size: z.number().nonnegative(), hasVideo: z.boolean(), width: z.number(), height: z.number(), previewPath: z.string(), waveform: z.array(z.number()) }).nullable(),
   clip: z.object({ start: z.number(), end: z.number() }), metadata: z.object({ scholar: z.string(), lecture: z.string(), source: z.string(), channel: z.string() }),
   segments: z.array(segmentSchema), style: styleSchema, glossary: z.array(z.object({ arabic: z.string(), english: z.string() })),
+  exportSettings: exportSettingsSchema,
   request: z.object({ id: z.string(), snapshot: z.string(), segmentIds: z.array(z.string()), prompt: z.string() }).nullable(),
   imports: z.array(z.object({ importedAt: z.string(), requestId: z.string(), raw: z.string() })),
 });

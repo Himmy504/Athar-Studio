@@ -13,7 +13,9 @@ export interface Segment {
 export interface Typography {
   font: string; size: number; bold: boolean; color: string;
   outline: number; shadow: number; spacing: number;
+  italic?: boolean; underline?: boolean; outlineColor?: string; shadowColor?: string;
 }
+export interface ExportSettings { resolution: 720 | 1080; fps: 24 | 25 | 30; speed: 'quality' | 'balanced' | 'quick' }
 export type BackgroundKind = 'original' | 'solid' | 'gradient' | 'image' | 'video';
 export interface CaptionPanel {
   preset: 'none' | 'solid' | 'glass' | 'gold' | 'paper' | 'emerald' | 'azure' | 'midnight';
@@ -34,6 +36,7 @@ export interface Project {
   media: Media | null; clip: { start: number; end: number };
   metadata: { scholar: string; lecture: string; source: string; channel: string };
   segments: Segment[]; style: Style; glossary: { arabic: string; english: string }[];
+  exportSettings?: ExportSettings;
   request: TranslationRequest | null; imports: ImportRecord[];
 }
 export interface Progress { jobId: string; kind: string; percent: number; message: string }

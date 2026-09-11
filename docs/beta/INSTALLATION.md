@@ -4,7 +4,7 @@ For Windows x64 PCs. The pilot targets Windows 10/11; the clean-machine and 8 GB
 
 ## Install
 
-1. Download `Athar Studio_0.2.0_x64-setup.exe` from the link supplied by the beta organizer. It is approximately 133 MB.
+1. Download `Athar Studio_0.3.0_x64-setup.exe` from the GitHub release. It is approximately 133 MB.
 2. Run the installer and open Athar Studio. Source code, Node, Rust, FFmpeg setup, and developer tools are not needed on your computer.
 3. Allow several GB of free disk space for speech models, playback caches, and exports. The installed application itself uses roughly 0.5 GB.
 4. If Microsoft Edge WebView2 setup is requested, allow the installer to complete it. Keep internet access available for initial setup.
@@ -14,7 +14,7 @@ The installer is unsigned. Windows may report an unrecognized publisher or block
 Optional integrity check in PowerShell, from your download folder:
 
 ```powershell
-Get-FileHash -LiteralPath '.\Athar Studio_0.2.0_x64-setup.exe' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\Athar Studio_0.3.0_x64-setup.exe' -Algorithm SHA256
 ```
 
 Compare the result with the supplied `.sha256` file. Matching hashes check that the files match; they do not identify the publisher or replace a digital signature.

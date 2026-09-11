@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, ImagePlus, Plus, Video, X } from 'lucide-react';
-import { Field, Range, Toggle } from './components';
+import { Field, NumberInput, Range, Toggle } from './components';
 import { presets, styleSchema } from './domain';
 import { chooseAsset } from './bridge';
 import type { Project, Style, Typography } from './types';
@@ -15,7 +15,7 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
   });
   const [presetName,setPresetName]=useState('');
   const s=p.style;
-  const change=(patch:Partial<Style>,key='style')=>update(v=>({...v,style:{...v.style,...patch}}),key);
+  const change=(patch:Partial<Style>,key='style')=>update(v=>({...v,style:{...v.style,name:'Custom',...patch}}),key);
   const typography=s[language];
   const type=(patch:Partial<Typography>)=>change({[language]:{...typography,...patch}},'type-'+language);
   const background=(patch:Partial<Style['background']>)=>change({background:{...s.background,...patch}},'background');
@@ -50,19 +50,27 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
           <Range label="Border width" value={s.panel.borderWidth} min={0} max={8} step={.5} onChange={borderWidth=>change({panel:{...s.panel,borderWidth}},'panel-border-width')}/>
         </details>}
         <div className="divider"/>
-        <div className="section-caption">Typography</div>
+        <div className="section-caption inspector-section-title">Typography<button className="text-button" onClick={()=>type(structuredClone(presets.Bilingual[language]))} title="Reset this language's typography">Reset</button></div>
         <div className="segmented">{(['english','arabic'] as const).map(l=><button key={l} onClick={()=>setLanguage(l)} className={language===l?'active':''}>{l==='arabic'?'العربية':'English'}</button>)}</div>
         <Field label="Font family"><select aria-label={language+' caption font'} value={typography.font} onChange={e=>type({font:e.target.value})}>
           {!FONT_CATALOG.some(font=>font.language===language&&font.family===typography.font)&&<option>{typography.font}</option>}
           {FONT_CATALOG.filter(font=>font.language===language).map(font=><option key={font.id}>{font.family}</option>)}
         </select></Field>
-        <div className="field-row"><Field label="Size"><input type="number" min="18" max="110" value={typography.size} onChange={e=>type({size:Math.min(110,Math.max(18,+e.target.value))})}/></Field>
+        <div className="field-row"><Field label="Size"><NumberInput key={language} label={language+' font size'} min={18} max={300} value={typography.size} onChange={size=>type({size})}/></Field>
         <Field label="Text color"><div className="color-input"><input aria-label={language+' text color'} type="color" value={typography.color} onChange={e=>type({color:e.target.value})}/><span>{typography.color}</span></div></Field></div>
         <Toggle label="Bold text" checked={typography.bold} onChange={bold=>type({bold})}/>
-        <details className="advanced"><summary>Outline, shadow & spacing <ChevronDown size={13}/></summary><Range label="Outline" min={0} max={8} step={.5} value={typography.outline} onChange={outline=>type({outline})}/><Range label="Shadow" min={0} max={10} value={typography.shadow} onChange={shadow=>type({shadow})}/><Range label="Letter spacing" min={-3} max={12} step={.5} value={typography.spacing} onChange={spacing=>type({spacing})}/></details>
+        <div className="segmented type-effects"><button aria-pressed={!!typography.italic} className={typography.italic?'active':''} onClick={()=>type({italic:!typography.italic})}><i>Italic</i></button><button aria-pressed={!!typography.underline} className={typography.underline?'active':''} onClick={()=>type({underline:!typography.underline})}><u>Underline</u></button></div>
+        <details className="advanced"><summary>Outline, shadow & spacing <ChevronDown size={13}/></summary>
+          <Range label="Outline" min={0} max={16} step={.5} value={typography.outline} onChange={outline=>type({outline})}/>
+          <Field label="Outline color"><input aria-label={language+' outline color'} type="color" value={typography.outlineColor??'#161910'} onChange={e=>type({outlineColor:e.target.value})}/></Field>
+          <Range label="Shadow" min={0} max={20} value={typography.shadow} onChange={shadow=>type({shadow})}/>
+          <Field label="Shadow color"><input aria-label={language+' shadow color'} type="color" value={typography.shadowColor??'#000000'} onChange={e=>type({shadowColor:e.target.value})}/></Field>
+          <Range label="Letter spacing" min={-3} max={20} step={.5} value={typography.spacing} onChange={spacing=>type({spacing})}/>
+        </details>
         <div className="divider"/><div className="section-caption">Layout</div>
         <div className="segmented align-buttons">{(['left','center','right'] as const).map(a=><button key={a} aria-label={'Align '+a} className={s.alignment===a?'active':''} onClick={()=>change({alignment:a})}>{a==='left'?<AlignLeft size={17}/>:a==='right'?<AlignRight size={17}/>:<AlignCenter size={17}/>}</button>)}</div>
         <Range label="Caption position" value={s.captionY} min={15} max={88} suffix="%" onChange={captionY=>change({captionY})}/>
+        <div className="segmented position-shortcuts">{([['Top',30],['Middle',50],['Bottom',72]] as const).map(([label,captionY])=><button key={label} className={s.captionY===captionY?'active':''} onClick={()=>change({captionY})}>{label}</button>)}</div>
         {s.mode==='bilingual'&&<Range label="Space between languages" value={s.lineGap} min={0} max={60} onChange={lineGap=>change({lineGap})}/>}
         <Toggle label="Phrase fade" checked={s.fade} onChange={fade=>change({fade})}/>
       </>}

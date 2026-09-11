@@ -13,6 +13,8 @@ Use a passage you can check against the Arabic audio. These test captions should
 9. **Save and reopen** the project. Confirm the text, timings, approvals, fonts, and panel remain correct.
 10. **Export** a vertical MP4, then an English SRT. Watch the entire MP4 and check Arabic shaping, text clipping, audio synchronization, and the first/last captions.
 
+In builds with the new export controls, choose 720p for a faster test export. Balanced uses faster encoding at the same quality target as Quality, with potentially larger files. Quick draft prioritizes speed over quality and compression. Lower frame rates reduce processing; review playback speed does not change exported speech speed.
+
 ## Shortcuts
 
 | Key | Action |

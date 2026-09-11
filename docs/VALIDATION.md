@@ -4,6 +4,16 @@ This record distinguishes implemented behavior and automated evidence from the h
 
 ## Automated checks
 
+### Inspector and export updates (unreleased)
+
+- 47 TypeScript tests and seven Rust tests pass, including legacy-project defaults, large typography, ASS effects, persisted export settings, approval preservation, invalid export choices, and output dimensions.
+- Browser integration covers per-language editing/reset, effect colors, 300-size input clamping, save/reopen, MP4-only settings, and the 1060 × 720 export dialog.
+- Native integration produced 720p at 24/25 fps and 1080p at 30 fps with the selected encoding presets, AAC audio, and unchanged excerpt duration. Image, looping-video, and original-video backgrounds were exercised at 720p, including scaled channel branding. Cancellation and approval gates passed.
+- A real desktop URL-permission check opened Gemini and rejected an unrelated URL. Run `scripts/gemini-qa.py` manually against an owned QA instance with CDP port 9223; it opens the default browser.
+- `scripts/export-benchmark.py` compares repeated filtering with still-frame caching on a six-second 1080p blurred gradient using the same encoder settings. Three local trials had median times of 19.48 seconds and 6.78 seconds (2.87×); decoded video frames matched exactly. This is a synthetic test on one machine, not a general performance guarantee. Reports remain in ignored `test-results/`.
+
+### Existing workflow coverage
+
 - **44 TypeScript tests:** Gemini JSON contracts, complete-response validation, reordered IDs, duplicate/missing/unknown IDs, stale revisions, creator edits before translation, locally computed Arabic differences, unreported corrections, independent uncertainty resolution, exact text/timing approvals, split/merge, escaping, subtitle timing, project serialization, safe reconciliation of asset paths after asynchronous saves, loop bounds, zoom clamping, font sizing, legacy panel defaults, panel wrapping, and emphasis offsets.
 - **4 Rust tests:** native approval/timing gates, SRT timing, and atomic file replacement with Arabic filenames.
 - **Browser integration:** complete manual JSON handoff using synthetic responses, invalid-response repair, individual review gates, styling without approval loss, text changes invalidating approval, final export confirmation, SRT download, and layouts at 1440 and 1100 pixels. No page JavaScript errors were recorded.

@@ -7,13 +7,13 @@ function metrics(text: string, type: Typography, language:'arabic'|'english') {
   if (typeof document === 'undefined') return null;
   context ??= document.createElement('canvas').getContext('2d');
   if (!context) return null;
-  context.font=`${type.bold?700:400} ${cssFontSize(type,language)}px "${type.font}", "Noto Naskh Arabic", sans-serif`;
+  context.font=`${type.italic?'italic ':''}${type.bold?700:400} ${cssFontSize(type,language)}px "${type.font}", "Noto Naskh Arabic", sans-serif`;
   return context.measureText(text);
 }
 export function textWidth(text: string, type: Typography, language:'arabic'|'english'='english') {
   const measured=metrics(text,type,language);
   const count=[...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text)].length;
-  return (measured?.width ?? count*cssFontSize(type,language)*.62)+Math.max(0,count-1)*type.spacing;
+  return (measured?Math.max(measured.width,measured.actualBoundingBoxLeft+measured.actualBoundingBoxRight):count*cssFontSize(type,language)*.62)+Math.max(0,count-1)*type.spacing;
 }
 export function wrapCaption(text: string, width: number, measure: (text:string)=>number): TextLine[] {
   const lines: TextLine[]=[];let offset=0;

@@ -1,6 +1,6 @@
 # Licensing and source guide
 
-This is a release engineering record for the existing 0.2.0 Windows installer. **Status: HOLD — source completeness remains unresolved.** Preparing documents does not clear the installer for distribution.
+This is a release engineering record for the 0.3.0 Windows installer. **Status: HOLD — source completeness remains unresolved.** Preparing documents does not clear the installer for distribution.
 
 ## What the MIT license covers
 
