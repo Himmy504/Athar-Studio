@@ -1,6 +1,6 @@
 # Windows beta
 
-Athar Studio 0.2.0 supports short Arabic-to-English captioned clips on Windows x64.
+Athar Studio 0.3.0 supports short Arabic-to-English captioned clips on Windows x64.
 
 - [Installation](INSTALLATION.md): setup, model download, and troubleshooting.
 - [First clip](FIRST-CLIP.md): import, transcription, review, styling, and export.

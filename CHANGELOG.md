@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 Beta 1 — 2026-09-11
 
 - Increased caption font sizes to 300, with italic, underline, outline/shadow colors, and wider effect ranges.
 - Added per-language typography reset and top/middle/bottom caption positioning shortcuts.
