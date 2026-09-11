@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement to the clip workflow.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the creator workflow and where the current editor gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Include a concrete example if possible.
+    validations:
+      required: true

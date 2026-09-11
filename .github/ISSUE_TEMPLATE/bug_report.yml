@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible problem in the editor.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: App version and Windows version
+      placeholder: Athar Studio 0.1.1, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Describe what you did, what happened, and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Error message or screenshot
+      description: Remove personal file paths and private transcript text. Use a synthetic example where possible.
+  - type: textarea
+    id: processing
+    attributes:
+      label: Processing details
+      description: For transcription or export issues, include the selected model, Auto or CPU mode, RAM, GPU, source format, and excerpt duration.

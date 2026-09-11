@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Athar Studio",
+  "version": "0.3.0",
+  "identifier": "studio.athar.editor",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{"title":"Athar Studio","width":1440,"height":960,"minWidth":1060,"minHeight":720,"backgroundColor":"#1b1c1f"}],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost blob: data:; media-src 'self' asset: http://asset.localhost blob:; font-src 'self' asset: http://asset.localhost data:; connect-src 'self' ipc: http://ipc.localhost asset: http://asset.localhost; worker-src 'self' blob:",
+      "assetProtocol": { "enable": true, "scope": ["**"] }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": ["resources/fonts/*.ttf", "resources/runtime/**/*"],
+    "icon": ["icons/icon.ico"],
+    "windows": {"nsis":{"displayLanguageSelector":false,"installMode":"currentUser"}}
+  }
+}

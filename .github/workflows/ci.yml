@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-checks:
+    name: Windows checks
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Check repository, test review rules, and build frontend
+        run: npm run check
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.88.0 --profile minimal --no-self-update
+      - name: Test native core without media downloads
+        run: ./scripts/test-native.ps1
+        env:
+          RUSTUP_TOOLCHAIN: 1.88.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tests/e2e/requirements.txt
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install -r tests/e2e/requirements.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m playwright install chromium
+      - name: Test the editor workflow and layouts
+        run: ./tests/e2e/run.ps1
+      - name: Keep test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: windows-qa
+          path: |
+            test-results/*.png
+            test-results/*results.json
+            test-results/vite-qa*.log
+          if-no-files-found: ignore
+          retention-days: 7
