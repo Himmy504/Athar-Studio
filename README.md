@@ -11,17 +11,17 @@ Select a passage, transcribe the Arabic, review a translation, and style the fin
 ## Features
 
 - Local Arabic transcription with whisper.cpp, GPU acceleration, and CPU fallback.
-- Manual Gemini translation into English, French, Spanish, Portuguese, German, Turkish, Indonesian, Malay, Russian, Urdu, or Persian, with a terminology glossary.
+- Manual Gemini translation into English, French, Spanish, Portuguese, German, Turkish, Indonesian, Malay, Russian, Urdu, Persian, Dutch, Italian, Polish, Swedish, Swahili, Hindi, Bengali, or Tamil, with a terminology glossary.
 - Side-by-side Arabic and translation review, correction history, and individual caption approvals.
 - Caption looping, adjustable playback speed, keyboard shortcuts, and waveform zoom.
-- Translation-only or bilingual captions, 22 font families, sizes up to 300, text effects, decorative panels, and reusable styles.
+- Translation-only or bilingual captions, 31 bundled font families with language-specific choices, sizes up to 300, text effects, decorative panels, and reusable styles.
 - Footage, image, video, solid-color, and gradient backgrounds with source labels and channel branding.
 - Vertical, square, and landscape MP4 exports at 720p or 1080p, with 5/10/12/15/20/24/25/30 fps and encoding speed choices, plus Arabic and target-language SRT files.
 - Local projects with autosave, recovery, undo/redo, and source relinking.
 
 ## Getting started
 
-Athar Studio is currently a **Windows x64 beta (0.4.0 Beta 1)**. Speech models download separately inside the app.
+Athar Studio is currently a **Windows x64 beta (0.5.0 Beta 1)**. Speech models download separately inside the app.
 
 1. Import an audio or video file and select an excerpt.
 2. Download a speech model and transcribe the Arabic.

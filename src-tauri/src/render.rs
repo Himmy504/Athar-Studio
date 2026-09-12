@@ -9,7 +9,7 @@ fn number(v: &Value, key: &str) -> Result<f64, String> {
 pub fn validate(p: &Value) -> Result<(), String> {
     storage::project_check(p)?;
     if let Some(language) = p.get("targetLanguage") {
-        if !language.as_str().is_some_and(|code| ["en","fr","es","pt","de","tr","id","ms","ru","ur","fa"].contains(&code)) {
+        if !language.as_str().is_some_and(|code| ["en","fr","es","pt","de","tr","id","ms","ru","ur","fa","nl","it","pl","sv","sw","hi","bn","ta"].contains(&code)) {
             return Err("Unsupported translation language".into());
         }
     }
@@ -54,9 +54,11 @@ pub fn srt(p: &Value, lang: &str) -> Result<String,String> {
     validate(p)?;
     if !["arabic","english"].contains(&lang) { return Err("Unknown subtitle language".into()); }
     let time = |v:f64| { let n=(v*1000.0).round() as u64; format!("{:02}:{:02}:{:02},{:03}",n/3600000,(n/60000)%60,(n/1000)%60,n%1000) };
+    let rtl = lang == "arabic" || matches!(p["targetLanguage"].as_str(), Some("ur" | "fa"));
     let mut result = String::new();
     for (i,s) in p["segments"].as_array().unwrap().iter().enumerate() {
-        let text=s[lang].as_str().unwrap_or("").replace('<',"＜").replace('>',"＞").replace("\r\n","\n").replace("\n\n","\n");
+        let text=s[lang].as_str().unwrap_or("").replace('<',"＜").replace('>',"＞").replace("\r\n","\n").replace('\r',"\n");
+        let text=text.trim().split('\n').filter(|line| !line.is_empty()).map(|line| if rtl {format!("\u{200f}{}\u{200f}",line)} else {line.to_owned()}).collect::<Vec<_>>().join("\n");
         result.push_str(&format!("{}\n{} --> {}\n{}\n\n",i+1,time(number(s,"start")?),time(number(s,"end")?),text.trim()));
     }
     Ok(result)
@@ -182,7 +184,7 @@ mod tests {
         } } }
     }
     #[test] fn target_language_subtitles_and_validation() {
-        for (code,text) in [("ru","Это книга"),("ur","یہ کتاب ہے"),("fa","این یک کتاب است")] {
+        for (code,text) in [("ru","Это книга"),("ur","یہ کتاب ہے"),("fa","این یک کتاب است"),("nl","Een boek"),("it","Un libro"),("pl","Książka"),("sv","En bok"),("sw","Kitabu"),("hi","यह एक किताब है।"),("bn","এটি একটি বই।"),("ta","இது ஒரு புத்தகம்.")] {
             let mut p=project();p["targetLanguage"]=serde_json::json!(code);
             p["segments"][0]["english"]=serde_json::json!(text);
             p["segments"][0]["approval"]["english"]=serde_json::json!(text);
@@ -191,6 +193,15 @@ mod tests {
         }
         let mut p=project();p["targetLanguage"]=serde_json::json!("unknown");
         assert!(validate(&p).is_err());
+    }
+    #[test] fn rtl_srt_keeps_punctuation_and_direction_per_line() {
+        let mut p=project();p["targetLanguage"]=serde_json::json!("ur");
+        let text="\"علم\", (2026) — Urdu\r\n12:30، \"کتاب\"!";
+        p["segments"][0]["english"]=serde_json::json!(text);
+        p["segments"][0]["approval"]["english"]=serde_json::json!(text);
+        let before=p.clone();
+        assert!(srt(&p,"english").unwrap().contains("\u{200f}\"علم\", (2026) — Urdu\u{200f}\n\u{200f}12:30، \"کتاب\"!\u{200f}"));
+        assert_eq!(p,before);
     }
     #[test] fn invalid_settings_fail_before_rendering() {
         for settings in [serde_json::json!({"resolution":480,"fps":30,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":60,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":30,"speed":"-bad"})] {

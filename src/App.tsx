@@ -1,4 +1,4 @@
-import { targetLanguage } from './languages';
+import { defaultLanguageFont, targetLanguage } from './languages';
 import { prepareTranslationBatch } from './translationBatches';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
@@ -228,7 +228,7 @@ export default function App(){
       <div className="modal-actions"><button className="primary-button" onClick={()=>setDialog(null)}>Done <Check size={15}/></button></div>
     </Modal>}
     {dialog==='glossary'&&<Modal title="Glossary" subtitle="Preferred translations for names and religious terms." onClose={()=>setDialog(null)}>
-      {p.glossary.map((g,i)=><div className="glossary-row" key={i}><input aria-label={'Arabic glossary term '+(i+1)} className="arabic" dir="rtl" placeholder="المصطلح" value={g.arabic} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,arabic:e.target.value}:x)}),'glossary-ar-'+i)}/><ArrowRight size={15}/><input aria-label={translation.name+' glossary term '+(i+1)} dir={translation.rtl?'rtl':'ltr'} placeholder={'Preferred '+translation.name} value={g.english} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,english:e.target.value}:x)}),'glossary-en-'+i)}/><button className="icon-button" aria-label={'Remove glossary term '+(i+1)} onClick={()=>edit(v=>({...v,glossary:v.glossary.filter((_,j)=>i!==j)}))}><X size={15}/></button></div>)}
+      {p.glossary.map((g,i)=><div className="glossary-row" key={i}><input aria-label={'Arabic glossary term '+(i+1)} className="arabic" dir="rtl" placeholder="المصطلح" value={g.arabic} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,arabic:e.target.value}:x)}),'glossary-ar-'+i)}/><ArrowRight size={15}/><input aria-label={translation.name+' glossary term '+(i+1)} dir={translation.rtl?'rtl':'ltr'} lang={translation.code} style={{fontFamily:defaultLanguageFont(translation.code)}} placeholder={'Preferred '+translation.name} value={g.english} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,english:e.target.value}:x)}),'glossary-en-'+i)}/><button className="icon-button" aria-label={'Remove glossary term '+(i+1)} onClick={()=>edit(v=>({...v,glossary:v.glossary.filter((_,j)=>i!==j)}))}><X size={15}/></button></div>)}
       <button className="secondary-button" onClick={()=>edit(v=>({...v,glossary:[...v.glossary,{arabic:'',english:''}]}))}><Plus size={15}/>Add term</button>
       <div className="modal-actions"><button className="primary-button" onClick={()=>setDialog(null)}>Save preferences</button></div>
     </Modal>}

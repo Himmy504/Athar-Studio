@@ -33,7 +33,7 @@ Ordinary playback shortcuts are suspended while typing or inside a dialog. Help 
 
 Tell the organizer whether you completed the export without help, where you got stuck, whether save/reopen preserved your work, and whether this workflow would save you time. A screenshot of the finished clip is useful; a full lecture recording is not needed for routine UI feedback.
 
-Changing the target language clears the current translation, glossary equivalents, and caption approvals. Use Undo to restore them. Save separate projects to keep multiple translations. Urdu and Persian use right-to-left text; Russian fonts include bundled Cyrillic glyphs.
+Changing the target language clears the current translation, glossary equivalents, and caption approvals. Use Undo to restore them. Save separate projects to keep multiple translations. Urdu and Persian use right-to-left text; Russian fonts include bundled Cyrillic glyphs. Hindi, Bengali, and Tamil have dedicated Noto Sans and Noto Serif choices. Urdu also offers Noto Nastaliq Urdu. The inspector shows fonts suited to the selected language. Quotes, commas, numbers, and mixed-script text use bidirectional rendering in preview and video exports; RTL SRT files include invisible direction marks for compatible subtitle players.
 
 For still backgrounds, 5, 10, 12, 15, or 20 fps reduces the number of frames rendered. Use 24–30 fps for smoother footage and fades. Audio speed and caption timing remain unchanged.
 

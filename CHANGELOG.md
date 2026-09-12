@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 Beta 1 — 2026-09-12
+
+- Added Dutch, Italian, Polish, Swedish, Swahili, Hindi, Bengali, and Tamil translation, including prompts, batching, review, saved projects, and subtitle exports.
+- Expanded the bundled font library to 31 families with language-specific choices: Noto Sans/Serif, dedicated Bengali, Devanagari and Tamil families, and Noto Nastaliq Urdu.
+- Fixed right-to-left caption layout for Urdu, Persian, and Arabic punctuation, quotes, numbers, and styled phrases in preview and video export. RTL subtitle files now include per-line direction marks.
+- Kept original caption text, manual line breaks, emphasis selections, and approvals intact during rendering.
+
 ## 0.4.0 Beta 1 — 2026-09-12
 
 - Added sequential translation batches with adjustable prompt limits, saved progress, and validation of each batch before import.

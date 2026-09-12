@@ -2,6 +2,8 @@ import type { Project, Segment, Style, Typography } from './types';
 import { panelLayout } from './captionLayout';
 import { panelDrawings } from './panelDrawing';
 import { assFontFamily, assFontSize } from './fontSizing';
+import { targetLanguage } from './languages';
+import { directionalText } from './textDirection';
 
 export function dimensions(ratio: Style['ratio']): [number, number] {
   return ratio === '16:9' ? [1920, 1080] : ratio === '1:1' ? [1080, 1080] : [1080, 1920];
@@ -22,10 +24,11 @@ export function srtTime(sec: number) {
   return String(Math.floor(ms / 3600000)).padStart(2, '0') + ':' + String(Math.floor(ms / 60000) % 60).padStart(2, '0') + ':' + String(Math.floor(ms / 1000) % 60).padStart(2, '0') + ',' + String(ms % 1000).padStart(3, '0');
 }
 export function generateSrt(project: Project, lang: 'arabic' | 'english') {
+  const rtl = lang === 'arabic' || targetLanguage(project).rtl;
   return project.segments.map((s, i) => (i + 1) + '\n' + srtTime(s.start) + ' --> ' + srtTime(s.end) + '\n' +
-    s[lang].replace(/</g, '＜').replace(/>/g, '＞').replace(/\r\n?/g, '\n').replace(/\n{2,}/g, '\n').trim()).join('\n\n') + '\n';
+    ((text: string) => rtl ? directionalText(text, true) : text)(s[lang].replace(/</g, '＜').replace(/>/g, '＞').replace(/\r\n?/g, '\n').replace(/\n{2,}/g, '\n').trim())).join('\n\n') + '\n';
 }
-function styledText(s: Segment, lang: 'arabic' | 'english', typography: Typography, from=0, to=s[lang].length) {
+function styledText(s: Segment, lang: 'arabic' | 'english', typography: Typography, rtl: boolean, from=0, to=s[lang].length) {
   const text = s[lang];
   const highlights = s.emphasis.filter(e => e.text.trim()).sort((a, b) => b.text.length - a.text.length);
   const ranges: {start:number;end:number;color:string;bold:boolean}[]=[];
@@ -43,14 +46,14 @@ function styledText(s: Segment, lang: 'arabic' | 'english', typography: Typograp
       result += escapeAss(next); position += next.length;
     }
   }
-  return result;
+  return directionalText(result, rtl, '\\N');
 }
 export function generateAss(p: Project) {
   const st = p.style, [w, h] = dimensions(st.ratio);
   const alignment = st.alignment === 'left' ? 1 : st.alignment === 'right' ? 3 : 2;
   const x = alignment === 1 ? 80 : alignment === 3 ? w - 80 : w / 2;
   const y = Math.round(h * st.captionY / 100);
-  const style = (name: string, t: Typography) => 'Style: ' + [name, assFontFamily(t.font).replace(/,/g, ''), assFontSize(t,name==='Arabic'?'arabic':'english'), assColor(t.color), assColor(t.color), assColor(t.outlineColor ?? '#161910'), assColor(t.shadowColor ?? '#000000').replace('&H00','&H80'), t.bold ? -1 : 0, t.italic ? -1 : 0, t.underline ? -1 : 0, 0, 100, 100, t.spacing, 0, 1, t.outline, t.shadow, 2, 80, 80, 80, 1].join(',');
+  const style = (name: string, t: Typography) => 'Style: ' + [name, assFontFamily(t.font).replace(/,/g, ''), assFontSize(t,name==='Arabic'?'arabic':'english'), assColor(t.color), assColor(t.color), assColor(t.outlineColor ?? '#161910'), assColor(t.shadowColor ?? '#000000').replace('&H00','&H80'), t.bold ? -1 : 0, t.italic ? -1 : 0, t.underline ? -1 : 0, 0, 100, 100, t.spacing, 0, 1, t.outline, t.shadow, 2, 80, 80, 80, -1].join(',');
   const header = [
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: ' + w, 'PlayResY: ' + h, 'WrapStyle: 0', 'ScaledBorderAndShadow: yes', '',
     '[V4+ Styles]', 'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
@@ -66,13 +69,13 @@ export function generateAss(p: Project) {
       for(const drawing of panelDrawings(st.panel,layout.x,layout.top,layout.width,layout.height,fade))header.push(line(s.start,s.end,'English',drawing,0));
       const textX=alignment===1?layout.x+layout.inset:alignment===3?layout.x+layout.width-layout.inset:w/2;
       let rowY=layout.top+st.panel.padding;
-      for(const row of layout.arabic){header.push(line(s.start,s.end,'Arabic',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.arabicPitch/2+row.offset})${fade}}`+styledText(s,'arabic',st.arabic,row.start,row.end)));rowY+=layout.arabicPitch;}
+      for(const row of layout.arabic){header.push(line(s.start,s.end,'Arabic',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.arabicPitch/2+row.offset})${fade}}`+styledText(s,'arabic',st.arabic,true,row.start,row.end)));rowY+=layout.arabicPitch;}
       rowY+=layout.gap;
-      for(const row of layout.english){header.push(line(s.start,s.end,'English',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.englishPitch/2+row.offset})${fade}}`+styledText(s,'english',st.english,row.start,row.end)));rowY+=layout.englishPitch;}
+      for(const row of layout.english){header.push(line(s.start,s.end,'English',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.englishPitch/2+row.offset})${fade}}`+styledText(s,'english',st.english,targetLanguage(p).rtl,row.start,row.end)));rowY+=layout.englishPitch;}
       return;
     }
-    if (st.mode === 'bilingual') header.push(line(s.start, s.end, 'Arabic', '{\\an' + alignment + '\\pos(' + x + ',' + (y - st.lineGap) + ')' + fade + '}' + styledText(s, 'arabic', st.arabic)));
-    header.push(line(s.start, s.end, 'English', '{\\an' + (alignment + 6) + '\\pos(' + x + ',' + y + ')' + fade + '}' + styledText(s, 'english', st.english)));
+    if (st.mode === 'bilingual') header.push(line(s.start, s.end, 'Arabic', '{\\an' + alignment + '\\pos(' + x + ',' + (y - st.lineGap) + ')' + fade + '}' + styledText(s, 'arabic', st.arabic, true)));
+    header.push(line(s.start, s.end, 'English', '{\\an' + (alignment + 6) + '\\pos(' + x + ',' + y + ')' + fade + '}' + styledText(s, 'english', st.english, targetLanguage(p).rtl)));
   });
   const end = Math.max(0, p.clip.end - p.clip.start);
   if (st.showScholar && p.metadata.scholar) header.push(line(0, end, 'Label', '{\\an8\\pos(' + (w / 2) + ',125)}' + escapeAss(p.metadata.scholar)));

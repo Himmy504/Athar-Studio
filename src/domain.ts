@@ -1,4 +1,4 @@
-import { targetLanguage } from './languages';
+import { targetLanguage, LANGUAGE_CODES } from './languages';
 import { z } from 'zod';
 import type { Project, Segment, Style, TranslationRequest } from './types';
 import catalog from './fontCatalog.json';
@@ -186,7 +186,7 @@ const segmentSchema = z.object({
 const projectSchema = z.object({
   translationPromptLimit:z.union([z.literal(6000),z.literal(10000),z.literal(16000)]).optional(),
   translationBatch:z.object({remainingIds:z.array(z.string()),completedIds:z.array(z.string()),sourceKey:z.string(),batchesDone:z.number().int().nonnegative()}).optional(),
-  targetLanguage: z.enum(['en','fr','es','pt','de','tr','id','ms','ru','ur','fa']).default('en'),
+  targetLanguage: z.enum(LANGUAGE_CODES).default('en'),
   schemaVersion: z.literal(1), id: z.string(), name: z.string(), createdAt: z.string(), updatedAt: z.string(),
   media: z.object({ path: z.string(), name: z.string(), duration: z.number().positive(), size: z.number().nonnegative(), hasVideo: z.boolean(), width: z.number(), height: z.number(), previewPath: z.string(), waveform: z.array(z.number()) }).nullable(),
   clip: z.object({ start: z.number(), end: z.number() }), metadata: z.object({ scholar: z.string(), lecture: z.string(), source: z.string(), channel: z.string() }),

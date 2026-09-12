@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { approve, createRequest, importResponse, isApproved, newProject, newSegment, parseProject, snapshot } from './domain';
-import { changeTargetLanguage, targetLanguage, TRANSLATION_LANGUAGES } from './languages';
+import { changeTargetLanguage, targetLanguage, TRANSLATION_LANGUAGES, languageFonts, defaultLanguageFont } from './languages';
 import { EXPORT_FRAME_RATES, exportSettingsSchema } from './exportSettings';
 import { generateAss, generateSrt } from './subtitles';
 import { fontFiles } from './fonts';
+import { createPanel } from './panelPresets';
 
 function fixture() {
   const p=newProject(); p.clip={start:0,end:4};
@@ -11,8 +12,33 @@ function fixture() {
   p.glossary=[{arabic:'العلم',english:'Knowledge'}];
   return p;
 }
-const samples=['Knowledge','Connaissance','Conocimiento','Conhecimento','Wissen','İlim','Pengetahuan','Pengetahuan','Знание','علم ہے','دانش'];
+const samples=['Knowledge','Connaissance','Conocimiento','Conhecimento','Wissen','İlim','Pengetahuan','Pengetahuan','Знание','علم ہے','دانش','Kennis','Conoscenza','Wiedza','Kunskap','Elimu','ज्ञान','জ্ঞান','அறிவு'];
 describe('Translation languages',()=>{
+  it.each(TRANSLATION_LANGUAGES)('offers suitable regular and bold font choices for $name',({code})=>{
+    const fonts=languageFonts(code);
+    expect(fonts.length).toBeGreaterThanOrEqual(2);
+    expect(fonts.some(f=>f.family===defaultLanguageFont(code))).toBe(true);
+    for(const f of fonts)for(const weight of [400,700])expect(f.files.some(file=>file.includes(`-${weight}-`))).toBe(true);
+    if(['hi','bn','ta'].includes(code))expect(fonts.every(f=>f.language!=='english')).toBe(true);
+  });
+  it.each(['ur','fa'] as const)('preserves %s punctuation, emphasis, line breaks and approvals with panels and SRT',code=>{
+    const p=changeTargetLanguage(fixture(),code);
+    const text='"علم", (2026) — Urdu\n12:30، "کتاب"!';
+    p.segments[0]=approve({...p.segments[0],english:text,emphasis:[{text:'علم',color:'#ffcc00',bold:true}]});
+    const before=JSON.stringify(p.segments);
+    for(const panel of ['none','azure'] as const){
+      p.style.panel=createPanel(panel);
+      const ass=generateAss(p);
+      expect(ass.split('\n').filter(line=>line.startsWith('Style:')).every(line=>line.endsWith(',-1'))).toBe(true);
+      const lines=ass.split('\n').filter(line=>line.startsWith('Dialogue: 1')&&line.includes(',English,'));
+      expect(lines.every(line=>line.includes('\u200f')&&line.endsWith('\u200f'))).toBe(true);
+      const rendered=lines.map(line=>line.split(',,0,0,0,,')[1].replace(/\{[^}]*\}/g,'').replace(/\u200f/g,'')).join(' ').replace(/\\N/g,' ');
+      expect(rendered).toContain(text.replace('\n',' '));
+      expect(JSON.stringify(p.segments)).toBe(before);
+    }
+    expect(generateSrt(p,'english')).toContain('\u200f"علم", (2026) — Urdu\u200f\n\u200f12:30، "کتاب"!\u200f');
+    expect(isApproved(p.segments[0])).toBe(true);
+  });
   it('preserves legacy English approvals and outstanding prompt snapshots',()=>{
     const p=fixture(); p.request=createRequest(p);
     delete p.targetLanguage;
