@@ -1,6 +1,6 @@
 # Athar Studio
 
-A Windows video editor for Salafi content creators translating Arabic lectures into captioned English clips.
+A Windows video editor for Salafi content creators translating Arabic lectures into translated captioned clips.
 
 Select a passage, transcribe the Arabic, review a translation, and style the finished video in one workspace.
 
@@ -11,22 +11,22 @@ Select a passage, transcribe the Arabic, review a translation, and style the fin
 ## Features
 
 - Local Arabic transcription with whisper.cpp, GPU acceleration, and CPU fallback.
-- Manual Gemini translation through copy and paste, with a terminology glossary.
-- Side-by-side Arabic and English review, correction history, and individual caption approvals.
+- Manual Gemini translation into English, French, Spanish, Portuguese, German, Turkish, Indonesian, Malay, Russian, Urdu, or Persian, with a terminology glossary.
+- Side-by-side Arabic and translation review, correction history, and individual caption approvals.
 - Caption looping, adjustable playback speed, keyboard shortcuts, and waveform zoom.
-- English-only or bilingual captions, 22 font families, sizes up to 300, text effects, decorative panels, and reusable styles.
+- Translation-only or bilingual captions, 22 font families, sizes up to 300, text effects, decorative panels, and reusable styles.
 - Footage, image, video, solid-color, and gradient backgrounds with source labels and channel branding.
-- Vertical, square, and landscape MP4 exports at 720p or 1080p, with 24/25/30 fps and encoding speed choices, plus Arabic and English SRT files.
+- Vertical, square, and landscape MP4 exports at 720p or 1080p, with 5/10/12/15/20/24/25/30 fps and encoding speed choices, plus Arabic and target-language SRT files.
 - Local projects with autosave, recovery, undo/redo, and source relinking.
 
 ## Getting started
 
-Athar Studio is currently a **Windows x64 beta (0.3.0)**. Speech models download separately inside the app.
+Athar Studio is currently a **Windows x64 beta (0.4.0 Beta 1)**. Speech models download separately inside the app.
 
 1. Import an audio or video file and select an excerpt.
 2. Download a speech model and transcribe the Arabic.
-3. Copy the translation prompt into Gemini and paste its response back into Athar Studio.
-4. Check the Arabic and English against the audio, resolve flagged passages, and approve the captions.
+3. Choose a target language, then copy the translation prompt into Gemini and paste its response back into Athar Studio.
+4. Check the Arabic and translation against the audio, resolve flagged passages, and approve the captions.
 5. Choose fonts, a caption panel, and a background, then export.
 
 See the [installation guide](docs/beta/INSTALLATION.md) and [first-clip walkthrough](docs/beta/FIRST-CLIP.md).
@@ -53,7 +53,7 @@ npm run test:native
 
 ## Scope
 
-Each project contains one source and one continuous excerpt. The beta focuses on short Arabic-to-English clips. Full lecture editing, multiple excerpts, additional translation languages, and automatic publishing are outside the current scope. Clean-machine, broader hardware, and human translation-quality testing remain in progress.
+Each project contains one source and one continuous excerpt. The beta focuses on short translated Arabic clips. Full lecture editing, multiple excerpts, automatic publishing are outside the current scope. Clean-machine, broader hardware, and human translation-quality testing remain in progress.
 
 ## License
 

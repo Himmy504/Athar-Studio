@@ -1,9 +1,11 @@
+import { targetLanguage } from './languages';
+import { prepareTranslationBatch } from './translationBatches';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { ArrowDownToLine, ArrowRight, BookOpen, Check, CheckCheck, CircleHelp, Cpu, Download, FilePlus2, FolderOpen, Languages, LoaderCircle, Monitor, Pause, Plus, Redo2, Save, Undo2, Upload, X } from 'lucide-react';
 import { desktop, chooseExport, chooseMedia, chooseProject, chooseSaveProject, downloadText, launchGemini, native, showFile } from './bridge';
-import { approve, createRequest, exportErrors, formatTime, importResponse, isApproved, newProject, newSegment, parseProject, repairPrompt } from './domain';
+import { approve, exportErrors, formatTime, importResponse, isApproved, newProject, newSegment, parseProject, repairPrompt } from './domain';
 import { captionWarnings, generateAss, generateSrt } from './subtitles';
 import { Modal, Field } from './components';
 import { useProject } from './useProject';
@@ -14,13 +16,14 @@ import { ClipStrip } from './ClipStrip';
 import { useReviewPlayback } from './useReviewPlayback';
 import { PLAYBACK_RATES } from './playback';
 import { useCaptionFonts } from './fonts';
-import { DEFAULT_EXPORT, EXPORT_SPEEDS } from './exportSettings';
+import { DEFAULT_EXPORT, EXPORT_SPEEDS, EXPORT_FRAME_RATES } from './exportSettings';
 import type { Device, ExportSettings, Progress, Project, RuntimeStatus } from './types';
 
 type Dialog = 'translate'|'models'|'glossary'|'export'|'help'|'new'|'retranscribe'|null;
 export default function App(){
   const store=useProject(),{project:p,update,replace,path,setPath,status,undo,redo,canUndo,canRedo,persist}=store;
   const exportSettings=p.exportSettings??DEFAULT_EXPORT;
+  const translation=targetLanguage(p);
   const [dialog,setDialog]=useState<Dialog>(null),[notice,setNotice]=useState(''),[job,setJob]=useState<Progress|null>(null);
   const [runtime,setRuntime]=useState<RuntimeStatus|null>(null),[model,setModel]=useState(()=>localStorage.getItem('athar-model')||'large-v3-turbo-q5_0');
   const [device,setDevice]=useState<Device>(()=>localStorage.getItem('athar-device')==='cpu'?'cpu':'auto'),[lastDevice,setLastDevice]=useState('Auto');
@@ -146,14 +149,14 @@ export default function App(){
   }
   async function copyPrompt(){
     try{
-      const request=createRequest(p);
-      await navigator.clipboard.writeText(request.prompt);
-      edit(v=>({...v,request}));setPasteError('');setResponse('');
+      const prepared=prepareTranslationBatch(p);
+      await navigator.clipboard.writeText(prepared.request!.prompt);
+      edit(()=>prepared);setPasteError('');setResponse('');
       notify('Prompt copied.');
     }catch(e){notify(String(e));}
   }
   function paste(){
-    try{const next=importResponse(p,response);edit(()=>next);setDialog(null);setPasteError('');setResponse('');notify('Translation imported.');}
+    try{const next=importResponse(p,response);edit(()=>next);setDialog(null);setPasteError('');setResponse('');notify(next.translationBatch?.remainingIds.length?'Translation imported. Copy the next prompt to continue.':'Translation imported.');}
     catch(e){setPasteError(e instanceof Error?e.message:String(e));}
   }
   async function doExport(){
@@ -164,9 +167,9 @@ export default function App(){
       if(!desktop){
         if(exportFormat==='mp4'){notify('Video rendering is available in the Windows app.');return;}
         const lang=exportFormat==='srt-arabic'?'arabic':'english';
-        downloadText(p.name+'-'+lang+'.srt',generateSrt(p,lang),'text/plain;charset=utf-8');notify('Subtitles exported.');return;
+        downloadText(p.name+'-'+(lang==='arabic'?'ar':translation.code)+'.srt',generateSrt(p,lang),'text/plain;charset=utf-8');notify('Subtitles exported.');return;
       }
-      const target=await chooseExport(p.name,exportFormat);if(!target)return;
+      const target=await chooseExport(p.name,exportFormat,translation.code);if(!target)return;
       const result=await runJob('export','Preparing your export',id=>native.export(p,ass,target,exportFormat,id));
       if(result){setExported(result);notify('Export complete.');}
     }catch(e){notify(String(e));}
@@ -210,7 +213,7 @@ export default function App(){
     </main>
     <ClipStrip key={p.id+'-'+trimKey} project={p} busy={busy} onImport={()=>p.media?setDialog('new'):void importMedia()} onTrim={changeTrim} onTranscribe={()=>void transcribe()} time={time} onSeek={playback.seek}/>
     {job&&<div className="job-panel" role="status"><div className="job-spinner"><LoaderCircle size={22}/></div><div><strong>{job.message}</strong><div className="job-progress"><span style={{width:Math.max(2,job.percent)+'%'}}/></div><small>{Math.round(job.percent)}%</small></div><button className="secondary-button" onClick={()=>void native.cancel(job.jobId).catch(e=>notify(String(e)))}><Pause size={14}/>Cancel</button></div>}
-    {dialog==='translate'&&<Modal title="Import translation" subtitle="Paste the JSON response from Gemini." onClose={()=>setDialog(null)} wide>
+    {dialog==='translate'&&<Modal title="Import translation" subtitle={`Paste the JSON response for the current prompt (${p.request?.segmentIds.length??0} captions).`} onClose={()=>setDialog(null)} wide>
       <textarea className="response-input" aria-label="Gemini JSON response" spellCheck={false} placeholder={'{\n  "schemaVersion": 1,\n  "requestId": "…",\n  "segments": [ … ]\n}'} value={response} onChange={e=>setResponse(e.target.value)}/>
       {pasteError&&<div className="inline-error"><p>{pasteError}</p><button className="secondary-button" onClick={()=>void navigator.clipboard.writeText(repairPrompt(p,pasteError)).then(()=>notify('Repair prompt copied.')).catch(e=>notify(String(e)))}>Copy repair prompt</button></div>}
       <div className="modal-actions"><button className="secondary-button" onClick={()=>setDialog(null)}>Cancel</button><button className="primary-button" onClick={paste} disabled={!response.trim()||busy}><CheckCheck size={16}/>Import for review</button></div>
@@ -225,7 +228,7 @@ export default function App(){
       <div className="modal-actions"><button className="primary-button" onClick={()=>setDialog(null)}>Done <Check size={15}/></button></div>
     </Modal>}
     {dialog==='glossary'&&<Modal title="Glossary" subtitle="Preferred translations for names and religious terms." onClose={()=>setDialog(null)}>
-      {p.glossary.map((g,i)=><div className="glossary-row" key={i}><input aria-label={'Arabic glossary term '+(i+1)} className="arabic" dir="rtl" placeholder="المصطلح" value={g.arabic} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,arabic:e.target.value}:x)}),'glossary-ar-'+i)}/><ArrowRight size={15}/><input aria-label={'English glossary term '+(i+1)} placeholder="Preferred English" value={g.english} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,english:e.target.value}:x)}),'glossary-en-'+i)}/><button className="icon-button" aria-label={'Remove glossary term '+(i+1)} onClick={()=>edit(v=>({...v,glossary:v.glossary.filter((_,j)=>i!==j)}))}><X size={15}/></button></div>)}
+      {p.glossary.map((g,i)=><div className="glossary-row" key={i}><input aria-label={'Arabic glossary term '+(i+1)} className="arabic" dir="rtl" placeholder="المصطلح" value={g.arabic} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,arabic:e.target.value}:x)}),'glossary-ar-'+i)}/><ArrowRight size={15}/><input aria-label={translation.name+' glossary term '+(i+1)} dir={translation.rtl?'rtl':'ltr'} placeholder={'Preferred '+translation.name} value={g.english} onChange={e=>edit(v=>({...v,glossary:v.glossary.map((x,j)=>j===i?{...x,english:e.target.value}:x)}),'glossary-en-'+i)}/><button className="icon-button" aria-label={'Remove glossary term '+(i+1)} onClick={()=>edit(v=>({...v,glossary:v.glossary.filter((_,j)=>i!==j)}))}><X size={15}/></button></div>)}
       <button className="secondary-button" onClick={()=>edit(v=>({...v,glossary:[...v.glossary,{arabic:'',english:''}]}))}><Plus size={15}/>Add term</button>
       <div className="modal-actions"><button className="primary-button" onClick={()=>setDialog(null)}>Save preferences</button></div>
     </Modal>}
@@ -233,13 +236,14 @@ export default function App(){
       {job&&<ModalJob job={job} notify={notify}/>}
       {exported?<div className="export-success"><div><CheckCheck size={36}/></div><p>{exported.split(/[\\/]/).pop()}</p><button className="primary-button" onClick={()=>void showFile(exported).catch(e=>notify(String(e)))}><FolderOpen size={16}/>Show in folder</button></div>:<>
         <div className="export-summary"><span><CheckCheck size={22}/><strong>{approved} / {p.segments.length}</strong> approved captions</span>{exportFormat==='mp4'&&<span><Monitor size={22}/><strong>{p.style.ratio}</strong> {exportSettings.resolution}p · {exportSettings.fps} fps</span>}</div>
-        <Field label="Format"><select value={exportFormat} onChange={e=>setExportFormat(e.target.value)} disabled={busy}><option value="mp4">MP4 video · captions burned in</option><option value="srt-english">English subtitles · SRT</option><option value="srt-arabic">Arabic subtitles · SRT</option></select></Field>
+        <Field label="Format"><select value={exportFormat} onChange={e=>setExportFormat(e.target.value)} disabled={busy}><option value="mp4">MP4 video · captions burned in</option><option value="srt-english">{translation.name} subtitles · SRT</option><option value="srt-arabic">Arabic subtitles · SRT</option></select></Field>
         {exportFormat==='mp4'&&<>
           <Field label="Aspect ratio"><select value={p.style.ratio} onChange={e=>edit(v=>({...v,style:{...v.style,ratio:e.target.value as Project['style']['ratio']}}))} disabled={busy}><option value="9:16">Vertical · 9:16</option><option value="1:1">Square · 1:1</option><option value="16:9">Landscape · 16:9</option></select></Field>
           <div className="field-row">
             <Field label="Resolution"><select value={exportSettings.resolution} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),resolution:Number(e.target.value) as ExportSettings['resolution']}}))}><option value="1080">1080p · Full HD</option><option value="720">720p · Faster export</option></select></Field>
-            <Field label="Frame rate"><select value={exportSettings.fps} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),fps:Number(e.target.value) as ExportSettings['fps']}}))}>{[24,25,30].map(fps=><option key={fps} value={fps}>{fps} fps</option>)}</select></Field>
+            <Field label="Frame rate"><select value={exportSettings.fps} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),fps:Number(e.target.value) as ExportSettings['fps']}}))}>{EXPORT_FRAME_RATES.map(fps=><option key={fps} value={fps}>{fps} fps</option>)}</select></Field>
           </div>
+          <p className="field-hint">Lower frame rates suit still backgrounds. Higher rates give smoother motion and fades. Audio speed stays unchanged.</p>
           <Field label="Encoding" hint={EXPORT_SPEEDS[exportSettings.speed].hint}><select value={exportSettings.speed} disabled={busy} onChange={e=>edit(v=>({...v,exportSettings:{...(v.exportSettings??DEFAULT_EXPORT),speed:e.target.value as ExportSettings['speed']}}))}>{Object.entries(EXPORT_SPEEDS).map(([id,speed])=><option key={id} value={id}>{speed.label}</option>)}</select></Field>
         </>}
         {errors.length>0&&<div className="inline-warning"><strong>Before you export</strong><ul>{errors.slice(0,5).map(e=><li key={e}>{e}</li>)}</ul></div>}

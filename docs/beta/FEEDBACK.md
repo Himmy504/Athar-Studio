@@ -7,7 +7,7 @@ Send a report to the beta maintainer or open a GitHub issue. Include:
 - Steps to reproduce, expected result, and actual result or exact error.
 - Whether it happens again, with a screenshot or short recording where useful.
 
-For caption layout problems, include the font, panel, aspect ratio, and affected text. For translation errors, distinguish incorrect Arabic transcription from an English translation that changes the meaning.
+For caption layout problems, include the font, panel, aspect ratio, and affected text. For translation errors, distinguish incorrect Arabic transcription from a target-language translation that changes the meaning.
 
 Report lost work, failed save/reopen, or incorrect audio in an export immediately. Keep a copy of the affected project before further editing.
 

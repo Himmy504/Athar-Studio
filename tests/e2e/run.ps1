@@ -21,7 +21,7 @@ try {
     } catch { }
   }
   if (!$taskReady) { throw 'The QA server did not become ready.' }
-  foreach ($taskScript in @('workflow_test.py','layout_test.py','review_tools_test.py','inspector_export_test.py')) {
+  foreach ($taskScript in @('workflow_test.py','layout_test.py','review_tools_test.py','inspector_export_test.py','languages_test.py','translation_batches_test.py')) {
     & $Python (Join-Path $PSScriptRoot $taskScript)
     if ($LASTEXITCODE -ne 0) { throw "$taskScript failed." }
   }

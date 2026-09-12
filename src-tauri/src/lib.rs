@@ -5,7 +5,7 @@ mod media;
 mod render;
 #[cfg(feature="native-smoke")]
 mod smoke;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 use serde::Serialize;
 use std::path::Path;
 
@@ -75,9 +75,14 @@ pub fn run(){
         .plugin(tauri_plugin_opener::init())
         .manage(jobs::JobState::default())
         .setup(|app|{
+            if let Some(window)=app.get_webview_window("main"){
+                let pixels=image::load_from_memory(include_bytes!("../icons/icon.png"))?.into_rgba8();
+                let (width,height)=pixels.dimensions();
+                let icon=tauri::image::Image::new_owned(pixels.into_raw(),width,height);
+                window.set_icon(icon)?;
+            }
             #[cfg(feature="native-smoke")]
             {
-                use tauri::Manager;
                 if let Ok(input)=std::env::var("ATHAR_SMOKE_INPUT"){
                     if let Some(window)=app.get_webview_window("main"){let _=window.hide();}
                     let handle=app.handle().clone();

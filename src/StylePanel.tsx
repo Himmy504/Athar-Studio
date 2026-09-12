@@ -1,3 +1,4 @@
+import { targetLanguage } from './languages';
 import { useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, ImagePlus, Plus, Video, X } from 'lucide-react';
 import { Field, NumberInput, Range, Toggle } from './components';
@@ -15,8 +16,11 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
   });
   const [presetName,setPresetName]=useState('');
   const s=p.style;
-  const change=(patch:Partial<Style>,key='style')=>update(v=>({...v,style:{...v.style,name:'Custom',...patch}}),key);
+  const translation=targetLanguage(p);
+  const availableFonts=FONT_CATALOG.filter(font=>language==='arabic'||translation.rtl?font.language==='arabic':translation.code==='ru'?font.files.some(f=>f.includes('-cyrillic-')):font.language==='english');
+  const change=(patch:Partial<Style>,key='style')=>update(v=>{const style={...v.style,name:'Custom',...patch};const font=FONT_CATALOG.find(f=>f.family===style.english.font);if(translation.rtl&&font?.language!=='arabic')style.english={...style.english,font:'Noto Naskh Arabic'};if(translation.code==='ru'&&!font?.files.some(f=>f.includes('-cyrillic-')))style.english={...style.english,font:'Inter'};return {...v,style};},key);
   const typography=s[language];
+  const typeLabel=language==='arabic'?'arabic':translation.name.toLowerCase();
   const type=(patch:Partial<Typography>)=>change({[language]:{...typography,...patch}},'type-'+language);
   const background=(patch:Partial<Style['background']>)=>change({background:{...s.background,...patch}},'background');
   const pick=async(kind:'image'|'video'|'logo')=>{
@@ -36,7 +40,7 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
           {!Object.hasOwn(presets,s.name)&&<option value="">Custom</option>}
           {Object.values(presets).map(preset=><option key={preset.name}>{preset.name}</option>)}
         </select></Field>
-        <Field label="Display"><select value={s.mode} onChange={e=>change({mode:e.target.value as Style['mode']})}><option value="bilingual">Arabic + English</option><option value="english">English only</option></select></Field>
+        <Field label="Display"><select value={s.mode} onChange={e=>change({mode:e.target.value as Style['mode']})}><option value="bilingual">Arabic + {translation.name}</option><option value="english">{translation.name} only</option></select></Field>
         <Field label="Caption panel"><select aria-label="Caption panel preset" title="Apply a panel with matching text colors and outlines" value={s.panel.preset} onChange={e=>{
           const preset=e.target.value as Style['panel']['preset'],palette=PANEL_PRESETS[preset];
           const effects=preset==='none'?{}:{outline:preset==='paper'?0:.5,shadow:0};
@@ -51,20 +55,20 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
         </details>}
         <div className="divider"/>
         <div className="section-caption inspector-section-title">Typography<button className="text-button" onClick={()=>type(structuredClone(presets.Bilingual[language]))} title="Reset this language's typography">Reset</button></div>
-        <div className="segmented">{(['english','arabic'] as const).map(l=><button key={l} onClick={()=>setLanguage(l)} className={language===l?'active':''}>{l==='arabic'?'العربية':'English'}</button>)}</div>
-        <Field label="Font family"><select aria-label={language+' caption font'} value={typography.font} onChange={e=>type({font:e.target.value})}>
-          {!FONT_CATALOG.some(font=>font.language===language&&font.family===typography.font)&&<option>{typography.font}</option>}
-          {FONT_CATALOG.filter(font=>font.language===language).map(font=><option key={font.id}>{font.family}</option>)}
+        <div className="segmented">{(['english','arabic'] as const).map(l=><button key={l} onClick={()=>setLanguage(l)} className={language===l?'active':''}>{l==='arabic'?'العربية':translation.name}</button>)}</div>
+        <Field label="Font family"><select aria-label={typeLabel+' caption font'} value={typography.font} onChange={e=>type({font:e.target.value})}>
+          {!availableFonts.some(font=>font.family===typography.font)&&<option>{typography.font}</option>}
+          {availableFonts.map(font=><option key={font.id}>{font.family}</option>)}
         </select></Field>
-        <div className="field-row"><Field label="Size"><NumberInput key={language} label={language+' font size'} min={18} max={300} value={typography.size} onChange={size=>type({size})}/></Field>
-        <Field label="Text color"><div className="color-input"><input aria-label={language+' text color'} type="color" value={typography.color} onChange={e=>type({color:e.target.value})}/><span>{typography.color}</span></div></Field></div>
+        <div className="field-row"><Field label="Size"><NumberInput key={language} label={typeLabel+' font size'} min={18} max={300} value={typography.size} onChange={size=>type({size})}/></Field>
+        <Field label="Text color"><div className="color-input"><input aria-label={typeLabel+' text color'} type="color" value={typography.color} onChange={e=>type({color:e.target.value})}/><span>{typography.color}</span></div></Field></div>
         <Toggle label="Bold text" checked={typography.bold} onChange={bold=>type({bold})}/>
         <div className="segmented type-effects"><button aria-pressed={!!typography.italic} className={typography.italic?'active':''} onClick={()=>type({italic:!typography.italic})}><i>Italic</i></button><button aria-pressed={!!typography.underline} className={typography.underline?'active':''} onClick={()=>type({underline:!typography.underline})}><u>Underline</u></button></div>
         <details className="advanced"><summary>Outline, shadow & spacing <ChevronDown size={13}/></summary>
           <Range label="Outline" min={0} max={16} step={.5} value={typography.outline} onChange={outline=>type({outline})}/>
-          <Field label="Outline color"><input aria-label={language+' outline color'} type="color" value={typography.outlineColor??'#161910'} onChange={e=>type({outlineColor:e.target.value})}/></Field>
+          <Field label="Outline color"><input aria-label={typeLabel+' outline color'} type="color" value={typography.outlineColor??'#161910'} onChange={e=>type({outlineColor:e.target.value})}/></Field>
           <Range label="Shadow" min={0} max={20} value={typography.shadow} onChange={shadow=>type({shadow})}/>
-          <Field label="Shadow color"><input aria-label={language+' shadow color'} type="color" value={typography.shadowColor??'#000000'} onChange={e=>type({shadowColor:e.target.value})}/></Field>
+          <Field label="Shadow color"><input aria-label={typeLabel+' shadow color'} type="color" value={typography.shadowColor??'#000000'} onChange={e=>type({shadowColor:e.target.value})}/></Field>
           <Range label="Letter spacing" min={-3} max={20} step={.5} value={typography.spacing} onChange={spacing=>type({spacing})}/>
         </details>
         <div className="divider"/><div className="section-caption">Layout</div>

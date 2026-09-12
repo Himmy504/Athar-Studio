@@ -15,7 +15,7 @@ export interface Typography {
   outline: number; shadow: number; spacing: number;
   italic?: boolean; underline?: boolean; outlineColor?: string; shadowColor?: string;
 }
-export interface ExportSettings { resolution: 720 | 1080; fps: 24 | 25 | 30; speed: 'quality' | 'balanced' | 'quick' }
+export interface ExportSettings { resolution: 720 | 1080; fps: 5 | 10 | 12 | 15 | 20 | 24 | 25 | 30; speed: 'quality' | 'balanced' | 'quick' }
 export type BackgroundKind = 'original' | 'solid' | 'gradient' | 'image' | 'video';
 export interface CaptionPanel {
   preset: 'none' | 'solid' | 'glass' | 'gold' | 'paper' | 'emerald' | 'azure' | 'midnight';
@@ -32,6 +32,9 @@ export interface Style {
 export interface TranslationRequest { id: string; snapshot: string; segmentIds: string[]; prompt: string }
 export interface ImportRecord { importedAt: string; requestId: string; raw: string }
 export interface Project {
+  translationPromptLimit?: 6000 | 10000 | 16000;
+  translationBatch?: { remainingIds: string[]; completedIds: string[]; sourceKey: string; batchesDone: number };
+  targetLanguage?: import('./languages').TranslationLanguage;
   schemaVersion: 1; id: string; name: string; createdAt: string; updatedAt: string;
   media: Media | null; clip: { start: number; end: number };
   metadata: { scholar: string; lecture: string; source: string; channel: string };

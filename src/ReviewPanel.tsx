@@ -1,3 +1,5 @@
+import { TRANSLATION_LANGUAGES, targetLanguage, changeTargetLanguage, type TranslationLanguage } from './languages';
+import { activeTranslationBatch, PROMPT_LIMITS, restartTranslationBatches } from './translationBatches';
 import { useEffect, useState } from 'react';
 import { AlertCircle, Check, CheckCheck, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Copy, ExternalLink, FileInput, Languages, Merge, Play, Plus, Scissors, Trash2 } from 'lucide-react';
 import { approve, arabicDifference, editSegment, formatTime, isApproved, isCorrected, mergeSegment, needsResolution, newSegment, resolveCorrection, splitSegment } from './domain';
@@ -8,6 +10,8 @@ export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavig
   project:Project; update:(fn:(p:Project)=>Project,key?:string)=>void;selectedId:string|null;onSelect:(id:string)=>void;onPlay:(id:string)=>void;onNavigate:(delta:number)=>void;onPrompt:()=>void;onPaste:()=>void;onGemini:()=>void;onTranscribe:()=>void;busy:boolean;notify:(s:string)=>void;
 }){
   const [filter,setFilter]=useState<'all'|'review'|'approved'>('all'),[expanded,setExpanded]=useState<string|null>(null),[split,setSplit]=useState<Segment|null>(null);
+  const translation=targetLanguage(p);
+  const batch=activeTranslationBatch(p);
   const approved=p.segments.filter(isApproved).length, flagged=p.segments.filter(needsResolution).length;
   const modify=(id:string,fn:(s:Segment)=>Segment,key='')=>update(v=>({...v,segments:v.segments.map(s=>s.id===id?fn(s):s)}),key);
   const act=(fn:()=>void)=>{try{fn();}catch(e){notify(e instanceof Error?e.message:String(e));}};
@@ -26,10 +30,14 @@ export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavig
   return <section className="review-panel">
     <div className="review-heading"><h2>Captions</h2><div className="review-navigation">{p.segments.length>0&&<span className="review-count">{approved}/{p.segments.length} approved{flagged>0&&<span className="flag-count"> · {flagged} flagged</span>}</span>}<button className="icon-button" aria-label="Previous caption" title="Previous caption (↑)" disabled={busy||!p.segments.length||selectedId===p.segments[0]?.id} onClick={()=>onNavigate(-1)}><ChevronLeft size={15}/></button><button className="icon-button" aria-label="Next caption" title="Next caption (↓)" disabled={busy||!p.segments.length||selectedId===p.segments.at(-1)?.id} onClick={()=>onNavigate(1)}><ChevronRight size={15}/></button></div></div>
     <div className="translation-actions">
-      <button onClick={onPrompt} disabled={busy||!p.segments.length}><Copy size={15}/><span>Copy prompt</span></button>
+      <button onClick={onPrompt} disabled={busy||!p.segments.length||!!batch&&!batch.remainingIds.length}><Copy size={15}/><span>Copy prompt</span></button>
       <button onClick={onGemini}><ExternalLink size={15}/><span>Open Gemini</span></button>
       <button className="paste-action" onClick={onPaste} disabled={busy||!p.request}><FileInput size={15}/><span>Paste response</span></button>
     </div>
+    <div className="translation-language"><Field label="Translate Arabic to"><select aria-label="Translation language" disabled={busy} value={translation.code} onChange={e=>{update(v=>changeTargetLanguage(v,e.target.value as TranslationLanguage));notify('Translation language changed. Previous translations and glossary equivalents were cleared. Use Undo to restore them.');}}>{TRANSLATION_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.name}</option>)}</select></Field>
+      <Field label="Prompt size"><select aria-label="Prompt size" title="Maximum characters in the complete prompt, including instructions, context, and glossary" disabled={busy} value={p.translationPromptLimit??10000} onChange={e=>update(v=>({...v,translationPromptLimit:Number(e.target.value) as Project['translationPromptLimit'],request:null}))}>{PROMPT_LIMITS.map(limit=><option key={limit} value={limit}>{limit===6000?'Small':limit===10000?'Standard':'Large'} · {limit.toLocaleString('en-US')}</option>)}</select></Field>
+    </div>
+    {batch&&<div className="translation-progress" role="status"><span>{batch.remainingIds.length?`Batch ${batch.batchesDone+1} · ${batch.completedIds.length}/${batch.completedIds.length+batch.remainingIds.length} captions imported`:'All batches imported'}{p.request&&` · ${p.request.segmentIds.length} in this prompt`}</span><button className="text-button" disabled={busy} onClick={()=>update(restartTranslationBatches)}>Restart batches</button></div>}
     <div className="caption-toolbar"><div className="caption-tabs">{(['all','review','approved'] as const).map(f=><button key={f} className={filter===f?'active':''} onClick={()=>setFilter(f)}>{f==='all'?'All captions':f==='review'?'Needs review':'Approved'}</button>)}</div><button className="icon-button" aria-label="Add caption manually" title="Add caption manually" onClick={add} disabled={busy||!p.media}><Plus size={17}/></button></div>
     <div className="caption-list">
       {!p.segments.length?<div className="empty-captions"><h3>No transcript</h3><p>{p.media?'Transcribe the selected excerpt or add captions manually.':'Import media to start transcribing.'}</p>{p.media&&<><button className="secondary-button" onClick={onTranscribe} disabled={busy}><Languages size={15}/>Transcribe Arabic</button><button className="text-button" disabled={busy} onClick={add}>Add captions manually</button></>}</div>:
@@ -44,7 +52,7 @@ export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavig
           {open&&<div className="original-text"><span>Original transcript</span><p className="arabic" dir="rtl">{s.originalArabic||'No original text — manually added caption'}</p>{s.inputArabic&&s.inputArabic!==s.originalArabic&&<><span>Submitted Arabic</span><p className="arabic" dir="rtl">{s.inputArabic}</p></>}</div>}
           {isCorrected(s)&&(open||!s.correctionResolved)&&<ArabicComparison segment={s}/>}
           <label className="caption-language-label"><span>Arabic</span><textarea aria-label={'Arabic caption '+(i+1)} className="arabic arabic-input" dir="rtl" rows={Math.min(5,Math.max(1,s.arabic.split('\n').length))} value={s.arabic} placeholder="النص العربي…" onFocus={()=>setExpanded(s.id)} disabled={busy} onChange={e=>modify(s.id,v=>editSegment(v,{arabic:e.target.value}),'arabic-'+s.id)}/></label>
-          <label className="caption-language-label"><span>English</span><textarea aria-label={'English caption '+(i+1)} className="english-input" rows={Math.min(5,Math.max(1,s.english.split('\n').length))} value={s.english} placeholder="English translation" disabled={busy} onChange={e=>modify(s.id,v=>editSegment(v,{english:e.target.value}),'english-'+s.id)}/></label>
+          <label className="caption-language-label"><span>{translation.name}</span><textarea aria-label={translation.name+' caption '+(i+1)} className="english-input" dir={translation.rtl?'rtl':'ltr'} lang={translation.code} style={{fontFamily:translation.rtl?'Noto Naskh Arabic':undefined}} rows={Math.min(5,Math.max(1,s.english.split('\n').length))} value={s.english} placeholder={translation.name+' translation'} disabled={busy} onChange={e=>modify(s.id,v=>editSegment(v,{english:e.target.value}),'english-'+s.id)}/></label>
           {!s.correctionResolved&&<div className="correction-box"><div><AlertCircle size={15}/><strong>Check this correction against the audio</strong></div><p>{s.correctionNote||'Gemini proposed a change to the Arabic.'}</p><div className="button-row"><button disabled={busy} onClick={()=>modify(s.id,v=>resolveCorrection(v,true))}><Check size={13}/>Accept correction</button><button disabled={busy} onClick={()=>modify(s.id,v=>resolveCorrection(v,false))}>Keep submitted Arabic</button>{s.arabic!==s.proposedArabic&&<button disabled={busy} onClick={()=>modify(s.id,v=>({...v,correctionResolved:true,approval:null}))}>Use my edit</button>}</div></div>}
           {s.uncertain&&!s.uncertaintyResolved&&<div className="uncertainty-box"><p><AlertCircle size={14}/> Gemini marked this passage as uncertain.</p><button disabled={busy} onClick={()=>modify(s.id,v=>({...v,uncertaintyResolved:true,approval:null}))}>I checked this passage against the audio</button></div>}
           {open&&<>
@@ -57,7 +65,7 @@ export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavig
         </article>;
       })}
     </div>
-    {split&&<SplitDialog segment={split} onClose={()=>setSplit(null)} onSplit={(at,a,e)=>{act(()=>{update(v=>splitSegment(v,split.id,at,a,e));setSplit(null);});}}/>}
+    {split&&<SplitDialog translation={translation} segment={split} onClose={()=>setSplit(null)} onSplit={(at,a,e)=>{act(()=>{update(v=>splitSegment(v,split.id,at,a,e));setSplit(null);});}}/>}
   </section>;
 }
 function EmphasisEditor({segment:s,onChange}:{segment:Segment;onChange:(e:Segment['emphasis'])=>void}){
@@ -68,12 +76,12 @@ function ArabicComparison({segment:s}:{segment:Segment}){
   const diff=arabicDifference(s.inputArabic??s.originalArabic,s.proposedArabic??s.arabic);
   return <div className="arabic-comparison"><span>Submitted Arabic</span><p className="arabic" dir="rtl">{diff.prefix}<del>{diff.removed}</del>{diff.suffix}</p><span>Gemini Arabic</span><p className="arabic" dir="rtl">{diff.prefix}<ins>{diff.added}</ins>{diff.suffix}</p></div>;
 }
-function SplitDialog({segment:s,onClose,onSplit}:{segment:Segment;onClose:()=>void;onSplit:(at:number,a:number,e:number)=>void}){
+function SplitDialog({translation,segment:s,onClose,onSplit}:{translation:ReturnType<typeof targetLanguage>;segment:Segment;onClose:()=>void;onSplit:(at:number,a:number,e:number)=>void}){
   const [at,setAt]=useState(+((s.start+s.end)/2).toFixed(2)),[a,setA]=useState(0),[e,setE]=useState(0);
   return <Modal title="Split this caption" subtitle="Click at the split point in each language, then set the matching time." onClose={onClose}>
     <Field label="Split at (seconds)"><input type="number" step=".01" min={s.start} max={s.end} value={at} onChange={v=>setAt(+v.target.value)}/></Field>
     <Field label="Arabic text split"><textarea className="arabic" dir="rtl" readOnly value={s.arabic} onSelect={v=>setA(v.currentTarget.selectionStart)}/></Field><p className="split-preview arabic" dir="rtl">{s.arabic.slice(0,a)} <b>│</b> {s.arabic.slice(a)}</p>
-    {s.english&&<><Field label="English text split"><textarea readOnly value={s.english} onSelect={v=>setE(v.currentTarget.selectionStart)}/></Field><p className="split-preview">{s.english.slice(0,e)} <b>│</b> {s.english.slice(e)}</p></>}
+    {s.english&&<><Field label={translation.name+' text split'}><textarea dir={translation.rtl?'rtl':'ltr'} readOnly value={s.english} onSelect={v=>setE(v.currentTarget.selectionStart)}/></Field><p className="split-preview" dir={translation.rtl?'rtl':'ltr'}>{s.english.slice(0,e)} <b>│</b> {s.english.slice(e)}</p></>}
     <p className="field-hint">Both resulting captions will need approval again. The original transcript is retained for reference.</p>
     <div className="modal-actions"><button className="secondary-button" onClick={onClose}>Cancel</button><button className="primary-button" disabled={a===0||a>=s.arabic.length||(!!s.english&&(e===0||e>=s.english.length))} onClick={()=>onSplit(at,a,e)}><Scissors size={15}/>Split caption</button></div>
   </Modal>;
