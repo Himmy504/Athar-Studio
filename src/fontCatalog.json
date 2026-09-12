@@ -241,7 +241,9 @@
       "ibm-plex-sans-arabic-latin-ext-400-normal.ttf",
       "ibm-plex-sans-arabic-arabic-700-normal.ttf",
       "ibm-plex-sans-arabic-latin-700-normal.ttf",
-      "ibm-plex-sans-arabic-latin-ext-700-normal.ttf"
+      "ibm-plex-sans-arabic-latin-ext-700-normal.ttf",
+      "ibm-plex-sans-arabic-cyrillic-ext-400-normal.ttf",
+      "ibm-plex-sans-arabic-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -265,7 +267,11 @@
       "inter-latin-400-normal.ttf",
       "inter-latin-ext-400-normal.ttf",
       "inter-latin-700-normal.ttf",
-      "inter-latin-ext-700-normal.ttf"
+      "inter-latin-ext-700-normal.ttf",
+      "inter-cyrillic-400-normal.ttf",
+      "inter-cyrillic-ext-400-normal.ttf",
+      "inter-cyrillic-700-normal.ttf",
+      "inter-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -289,7 +295,11 @@
       "roboto-latin-400-normal.ttf",
       "roboto-latin-ext-400-normal.ttf",
       "roboto-latin-700-normal.ttf",
-      "roboto-latin-ext-700-normal.ttf"
+      "roboto-latin-ext-700-normal.ttf",
+      "roboto-cyrillic-400-normal.ttf",
+      "roboto-cyrillic-ext-400-normal.ttf",
+      "roboto-cyrillic-700-normal.ttf",
+      "roboto-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -313,7 +323,11 @@
       "open-sans-latin-400-normal.ttf",
       "open-sans-latin-ext-400-normal.ttf",
       "open-sans-latin-700-normal.ttf",
-      "open-sans-latin-ext-700-normal.ttf"
+      "open-sans-latin-ext-700-normal.ttf",
+      "open-sans-cyrillic-400-normal.ttf",
+      "open-sans-cyrillic-ext-400-normal.ttf",
+      "open-sans-cyrillic-700-normal.ttf",
+      "open-sans-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -361,7 +375,11 @@
       "montserrat-latin-400-normal.ttf",
       "montserrat-latin-ext-400-normal.ttf",
       "montserrat-latin-700-normal.ttf",
-      "montserrat-latin-ext-700-normal.ttf"
+      "montserrat-latin-ext-700-normal.ttf",
+      "montserrat-cyrillic-400-normal.ttf",
+      "montserrat-cyrillic-ext-400-normal.ttf",
+      "montserrat-cyrillic-700-normal.ttf",
+      "montserrat-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -409,7 +427,11 @@
       "source-sans-3-latin-400-normal.ttf",
       "source-sans-3-latin-ext-400-normal.ttf",
       "source-sans-3-latin-700-normal.ttf",
-      "source-sans-3-latin-ext-700-normal.ttf"
+      "source-sans-3-latin-ext-700-normal.ttf",
+      "source-sans-3-cyrillic-400-normal.ttf",
+      "source-sans-3-cyrillic-ext-400-normal.ttf",
+      "source-sans-3-cyrillic-700-normal.ttf",
+      "source-sans-3-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -433,7 +455,11 @@
       "merriweather-latin-400-normal.ttf",
       "merriweather-latin-ext-400-normal.ttf",
       "merriweather-latin-700-normal.ttf",
-      "merriweather-latin-ext-700-normal.ttf"
+      "merriweather-latin-ext-700-normal.ttf",
+      "merriweather-cyrillic-400-normal.ttf",
+      "merriweather-cyrillic-ext-400-normal.ttf",
+      "merriweather-cyrillic-700-normal.ttf",
+      "merriweather-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -457,7 +483,9 @@
       "playfair-display-latin-400-normal.ttf",
       "playfair-display-latin-ext-400-normal.ttf",
       "playfair-display-latin-700-normal.ttf",
-      "playfair-display-latin-ext-700-normal.ttf"
+      "playfair-display-latin-ext-700-normal.ttf",
+      "playfair-display-cyrillic-400-normal.ttf",
+      "playfair-display-cyrillic-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -481,7 +509,11 @@
       "lora-latin-400-normal.ttf",
       "lora-latin-ext-400-normal.ttf",
       "lora-latin-700-normal.ttf",
-      "lora-latin-ext-700-normal.ttf"
+      "lora-latin-ext-700-normal.ttf",
+      "lora-cyrillic-400-normal.ttf",
+      "lora-cyrillic-ext-400-normal.ttf",
+      "lora-cyrillic-700-normal.ttf",
+      "lora-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -505,7 +537,11 @@
       "oswald-latin-400-normal.ttf",
       "oswald-latin-ext-400-normal.ttf",
       "oswald-latin-700-normal.ttf",
-      "oswald-latin-ext-700-normal.ttf"
+      "oswald-latin-ext-700-normal.ttf",
+      "oswald-cyrillic-400-normal.ttf",
+      "oswald-cyrillic-ext-400-normal.ttf",
+      "oswald-cyrillic-700-normal.ttf",
+      "oswald-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {
@@ -529,7 +565,11 @@
       "nunito-sans-latin-400-normal.ttf",
       "nunito-sans-latin-ext-400-normal.ttf",
       "nunito-sans-latin-700-normal.ttf",
-      "nunito-sans-latin-ext-700-normal.ttf"
+      "nunito-sans-latin-ext-700-normal.ttf",
+      "nunito-sans-cyrillic-400-normal.ttf",
+      "nunito-sans-cyrillic-ext-400-normal.ttf",
+      "nunito-sans-cyrillic-700-normal.ttf",
+      "nunito-sans-cyrillic-ext-700-normal.ttf"
     ],
     "metrics": {
       "regular": {

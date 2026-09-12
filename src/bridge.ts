@@ -19,9 +19,9 @@ export async function chooseProject() {
 export async function chooseSaveProject(name: string) {
   return await save({ defaultPath: name.replace(/[<>:"/\\|?*]/g, '') + '.athar', filters: [{ name: 'Athar project', extensions: ['athar'] }] });
 }
-export async function chooseExport(name: string, format: string) {
+export async function chooseExport(name: string, format: string, targetCode = 'en') {
   const ext = format === 'mp4' ? 'mp4' : 'srt';
-  return await save({ defaultPath: name.replace(/[<>:"/\\|?*]/g, '') + (ext === 'srt' ? '-' + format.split('-')[1] : '') + '.' + ext, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
+  return await save({ defaultPath: name.replace(/[<>:"/\\|?*]/g, '') + (ext === 'srt' ? '-' + (format === 'srt-arabic' ? 'ar' : targetCode) : '') + '.' + ext, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
 }
 export const native = {
   importMedia: (path: string, jobId: string) => invoke<Media>('import_media', { path, jobId }),

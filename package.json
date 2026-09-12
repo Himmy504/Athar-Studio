@@ -2,7 +2,7 @@
   "name": "athar-studio",
   "version": "0.3.0",
   "private": true,
-  "description": "A Windows editor for reviewed Arabic-to-English captioned clips",
+  "description": "A Windows editor for reviewed, translated Arabic captioned clips",
   "license": "MIT",
   "engines": {
     "node": ">=20.19.0"

@@ -8,6 +8,11 @@ fn number(v: &Value, key: &str) -> Result<f64, String> {
 }
 pub fn validate(p: &Value) -> Result<(), String> {
     storage::project_check(p)?;
+    if let Some(language) = p.get("targetLanguage") {
+        if !language.as_str().is_some_and(|code| ["en","fr","es","pt","de","tr","id","ms","ru","ur","fa"].contains(&code)) {
+            return Err("Unsupported translation language".into());
+        }
+    }
     let start = number(&p["clip"], "start")?; let end = number(&p["clip"], "end")?;
     if start < 0.0 || end <= start || end > number(&p["media"], "duration")? + 0.05 { return Err("Invalid excerpt timing".into()); }
     let segments = p["segments"].as_array().ok_or("No captions")?;
@@ -35,7 +40,7 @@ fn export_settings(p: &Value) -> Result<ExportSettings,String> {
     let settings=&p["exportSettings"];
     if settings.is_null() { return Ok(ExportSettings { resolution:1080, fps:30, preset:"veryfast", crf:"20" }); }
     let resolution=match settings["resolution"].as_u64() {Some(720)=>720,Some(1080)=>1080,_=>return Err("Choose 720p or 1080p for export".into())};
-    let fps=match settings["fps"].as_u64() {Some(24)=>24,Some(25)=>25,Some(30)=>30,_=>return Err("Choose 24, 25, or 30 fps for export".into())};
+    let fps=match settings["fps"].as_u64() {Some(v @ (5|10|12|15|20|24|25|30))=>v as u32,_=>return Err("Choose a supported frame rate (5, 10, 12, 15, 20, 24, 25, or 30 fps)".into())};
     let (preset,crf)=match settings["speed"].as_str() {Some("quality")=>("fast","20"),Some("balanced")=>("veryfast","20"),Some("quick")=>("ultrafast","23"),_=>return Err("Unknown export encoding preset".into())};
     Ok(ExportSettings {resolution,fps,preset,crf})
 }
@@ -171,10 +176,21 @@ mod tests {
     }
     #[test] fn legacy_and_selected_export_settings() {
         assert_eq!(export_settings(&project()).unwrap(),ExportSettings{resolution:1080,fps:30,preset:"veryfast",crf:"20"});
-        for resolution in [720,1080] { for fps in [24,25,30] { for (speed,preset,crf) in [("quality","fast","20"),("balanced","veryfast","20"),("quick","ultrafast","23")] {
+        for resolution in [720,1080] { for fps in [5,10,12,15,20,24,25,30] { for (speed,preset,crf) in [("quality","fast","20"),("balanced","veryfast","20"),("quick","ultrafast","23")] {
             let mut p=project();p["exportSettings"]=serde_json::json!({"resolution":resolution,"fps":fps,"speed":speed});
             assert_eq!(export_settings(&p).unwrap(),ExportSettings{resolution,fps,preset,crf});
         } } }
+    }
+    #[test] fn target_language_subtitles_and_validation() {
+        for (code,text) in [("ru","Это книга"),("ur","یہ کتاب ہے"),("fa","این یک کتاب است")] {
+            let mut p=project();p["targetLanguage"]=serde_json::json!(code);
+            p["segments"][0]["english"]=serde_json::json!(text);
+            p["segments"][0]["approval"]["english"]=serde_json::json!(text);
+            assert!(validate(&p).is_ok());
+            assert!(srt(&p,"english").unwrap().contains(text));
+        }
+        let mut p=project();p["targetLanguage"]=serde_json::json!("unknown");
+        assert!(validate(&p).is_err());
     }
     #[test] fn invalid_settings_fail_before_rendering() {
         for settings in [serde_json::json!({"resolution":480,"fps":30,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":60,"speed":"balanced"}),serde_json::json!({"resolution":720,"fps":30,"speed":"-bad"})] {
