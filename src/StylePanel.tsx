@@ -1,11 +1,10 @@
-import { targetLanguage } from './languages';
+import { targetLanguage, languageFonts, defaultLanguageFont } from './languages';
 import { useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, ImagePlus, Plus, Video, X } from 'lucide-react';
 import { Field, NumberInput, Range, Toggle } from './components';
 import { presets, styleSchema } from './domain';
 import { chooseAsset } from './bridge';
 import type { Project, Style, Typography } from './types';
-import { FONT_CATALOG } from './fonts';
 import { createPanel, PANEL_PRESETS } from './panelPresets';
 
 export function StylePanel({ project: p, update, notify }: { project: Project; update: (fn:(p:Project)=>Project,key?:string)=>void; notify:(message:string)=>void }) {
@@ -17,8 +16,12 @@ export function StylePanel({ project: p, update, notify }: { project: Project; u
   const [presetName,setPresetName]=useState('');
   const s=p.style;
   const translation=targetLanguage(p);
-  const availableFonts=FONT_CATALOG.filter(font=>language==='arabic'||translation.rtl?font.language==='arabic':translation.code==='ru'?font.files.some(f=>f.includes('-cyrillic-')):font.language==='english');
-  const change=(patch:Partial<Style>,key='style')=>update(v=>{const style={...v.style,name:'Custom',...patch};const font=FONT_CATALOG.find(f=>f.family===style.english.font);if(translation.rtl&&font?.language!=='arabic')style.english={...style.english,font:'Noto Naskh Arabic'};if(translation.code==='ru'&&!font?.files.some(f=>f.includes('-cyrillic-')))style.english={...style.english,font:'Inter'};return {...v,style};},key);
+  const availableFonts=languageFonts(language==='arabic'?'ar':translation.code);
+  const change=(patch:Partial<Style>,key='style')=>update(v=>{
+    const style={...v.style,name:'Custom',...patch};
+    if(!languageFonts(translation.code).some(f=>f.family===style.english.font))style.english={...style.english,font:defaultLanguageFont(translation.code)};
+    return {...v,style};
+  },key);
   const typography=s[language];
   const typeLabel=language==='arabic'?'arabic':translation.name.toLowerCase();
   const type=(patch:Partial<Typography>)=>change({[language]:{...typography,...patch}},'type-'+language);

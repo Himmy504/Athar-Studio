@@ -147,14 +147,14 @@ with sync_playwright() as pw:
     assert media()['paused']
     open_project(base)
     english_fonts=page.get_by_label('english caption font',exact=True).locator('option').all_text_contents()
-    assert len(english_fonts)==12,english_fonts
+    assert len(english_fonts)==14,english_fonts
     page.get_by_role('button',name='العربية',exact=True).click()
     arabic_fonts=page.get_by_label('arabic caption font',exact=True).locator('option').all_text_contents()
-    assert len(arabic_fonts)==10,arabic_fonts
+    assert len(arabic_fonts)==11,arabic_fonts
     loaded=page.evaluate('''async p=>{const {FONT_CATALOG,loadCaptionFonts}=await import('/src/fonts.ts');
-      const result=[]; for(const f of FONT_CATALOG){p.style[f.language].font=f.family;
+      const result=[]; for(const f of FONT_CATALOG){p.style[f.language==='arabic'?'arabic':'english'].font=f.family;
         await loadCaptionFonts(p.style);result.push(f.family);}return result;}''',base)
-    assert len(loaded)==22
+    assert len(loaded)==31
     page.get_by_label('arabic caption font',exact=True).select_option('Amiri')
     page.get_by_role('button',name='English',exact=True).click()
     page.get_by_label('english caption font',exact=True).select_option('Lora')
@@ -213,5 +213,5 @@ with sync_playwright() as pw:
     assert not errors,errors
     report={'ok':True,'fontFamiliesLoaded':loaded,'panelsRendered':7,'pageErrors':errors}
     (out/'review-tools-results.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-    print('PASS: looping (including source end), speed, safe shortcuts, approvals, zoom/pan, 22 fonts, and seven caption panels.',flush=True)
+    print('PASS: looping (including source end), speed, safe shortcuts, approvals, zoom/pan, 31 fonts, and seven caption panels.',flush=True)
     browser.close()

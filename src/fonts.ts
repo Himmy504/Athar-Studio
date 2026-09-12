@@ -13,7 +13,7 @@ export function loadCaptionFonts(style: Style) {
   const families = [...new Set([style.english.font, ...(style.mode === 'bilingual' ? [style.arabic.font] : []), 'Inter', 'Noto Naskh Arabic'])];
   return Promise.all(families.map(family => {
     if (!promises.has(family)) {
-      promises.set(family, Promise.all([400,700].map(weight => document.fonts.load(`${weight} 48px "${family}"`, 'بِسْمِ اللَّهِ ABC ā ī ū ḥ ṣ ḍ ṭ ʿ ʾ Знание Ёж فارسی اردو'))).then(results => {
+      promises.set(family, Promise.all([400,700].map(weight => document.fonts.load(`${weight} 48px "${family}"`, 'بِسْمِ اللَّهِ ABC ā ī ū ḥ ṣ ḍ ṭ ʿ ʾ Знание Ёж فارسی اردو ज्ञान বাংলা தமிழ்'))).then(results => {
         if (results.some(fonts => !fonts.length)) throw new Error('Could not load caption font: '+family);
       }).catch(error => { promises.delete(family); throw error; }));
     }

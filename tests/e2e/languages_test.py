@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright, expect
 from support import BASE_URL, launch_browser, serve_audio, wait_for_caption_pixels
 
 out = Path(__file__).resolve().parents[2] / 'test-results'
-languages = [('fr','French','Un livre'),('es','Spanish','Un libro'),('pt','Portuguese','Um livro'),('de','German','Ein Buch'),('tr','Turkish','Bir kitap'),('id','Indonesian','Sebuah buku'),('ms','Malay','Sebuah buku'),('ru','Russian','Это книга'),('ur','Urdu','یہ کتاب ہے'),('fa','Persian','این یک کتاب است')]
+languages = [('fr','French','Un livre'),('es','Spanish','Un libro'),('pt','Portuguese','Um livro'),('de','German','Ein Buch'),('tr','Turkish','Bir kitap'),('id','Indonesian','Sebuah buku'),('ms','Malay','Sebuah buku'),('ru','Russian','Это книга'),('ur','Urdu','یہ کتاب ہے'),('nl','Dutch','Een boek'),('it','Italian','Un libro'),('pl','Polish','Książka'),('sv','Swedish','En bok'),('sw','Swahili','Kitabu'),('hi','Hindi','यह एक किताब है।'),('bn','Bengali','এটি একটি বই।'),('ta','Tamil','இது ஒரு புத்தகம்.'),('fa','Persian','این یک کتاب است')]
 with sync_playwright() as pw:
     browser = launch_browser(pw)
     page = browser.new_page(viewport={'width':1440,'height':900}, permissions=['clipboard-read','clipboard-write'])
@@ -16,7 +16,7 @@ with sync_playwright() as pw:
     page.goto(BASE_URL,wait_until='networkidle',timeout=120000)
     page.locator('input[type=file]').set_input_files(str(out/'approved.athar'))
     expect(page.get_by_label('Translation language')).to_have_value('en')
-    assert page.get_by_label('Translation language').locator('option').count() == 11
+    assert page.get_by_label('Translation language').locator('option').count() == 19
     for code,name,text in languages:
         print('Testing '+name,flush=True)
         page.get_by_label('Translation language').select_option(code)
@@ -74,7 +74,7 @@ root=out.parent
 ffmpeg=root/'src-tauri/resources/runtime/ffmpeg/ffmpeg.exe'
 ffprobe=ffmpeg.with_name('ffprobe.exe')
 if ffmpeg.exists() and ffprobe.exists():
-    for fps,code in [(5,'ur'),(10,'fr'),(12,'fa'),(15,'tr'),(20,'ru')]:
+    for fps,code in [(5,'ur'),(10,'fr'),(12,'fa'),(15,'tr'),(20,'ru'),(15,'hi'),(15,'bn'),(15,'ta'),(15,'nl')]:
         output=out/f'language-{code}-{fps}fps.mp4'
         result=subprocess.run([str(ffmpeg),'-y','-f','lavfi','-i',f'color=c=black:s=720x1280:r={fps}:d=1','-i',str(out/'source.wav'),'-t','1','-vf',f'subtitles=test-results/language-{code}.ass:fontsdir=src-tauri/resources/fonts','-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-c:a','aac',str(output)],cwd=root,capture_output=True,text=True,encoding='utf-8',errors='replace',check=True)
         assert 'failed to find any fallback' not in result.stderr.lower(),result.stderr
@@ -84,4 +84,4 @@ if ffmpeg.exists() and ffprobe.exists():
         assert video['r_frame_rate']==f'{fps}/1' and video['width']==720 and video['height']==1280
         assert any(s['codec_name']=='aac' for s in probe['streams'])
     print('Bundled FFmpeg: Urdu, Persian, Russian, French and Turkish rendered at all five lower frame rates with AAC audio.')
-print('All ten translation languages, RTL editing, font presets, persistence and lower FPS passed.')
+print('All nineteen translation languages, RTL editing, font presets, persistence and lower FPS passed.')

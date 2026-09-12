@@ -584,5 +584,243 @@
       }
     },
     "assFamily": "Nunito Sans 12pt ExtraLight 12pt"
+  },
+  {
+    "id": "noto-sans",
+    "family": "Noto Sans",
+    "language": "english",
+    "files": [
+      "noto-sans-latin-400-normal.ttf",
+      "noto-sans-latin-ext-400-normal.ttf",
+      "noto-sans-cyrillic-400-normal.ttf",
+      "noto-sans-cyrillic-ext-400-normal.ttf",
+      "noto-sans-latin-700-normal.ttf",
+      "noto-sans-latin-ext-700-normal.ttf",
+      "noto-sans-cyrillic-700-normal.ttf",
+      "noto-sans-cyrillic-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1124,
+        "descent": 395
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1124,
+        "descent": 395
+      }
+    },
+    "assFamily": "Noto Sans"
+  },
+  {
+    "id": "noto-serif",
+    "family": "Noto Serif",
+    "language": "english",
+    "files": [
+      "noto-serif-latin-400-normal.ttf",
+      "noto-serif-latin-ext-400-normal.ttf",
+      "noto-serif-cyrillic-400-normal.ttf",
+      "noto-serif-cyrillic-ext-400-normal.ttf",
+      "noto-serif-latin-700-normal.ttf",
+      "noto-serif-latin-ext-700-normal.ttf",
+      "noto-serif-cyrillic-700-normal.ttf",
+      "noto-serif-cyrillic-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1069,
+        "descent": 389
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1069,
+        "descent": 389
+      }
+    },
+    "assFamily": "Noto Serif"
+  },
+  {
+    "id": "noto-sans-bengali",
+    "family": "Noto Sans Bengali",
+    "language": "bengali",
+    "files": [
+      "noto-sans-bengali-bengali-400-normal.ttf",
+      "noto-sans-bengali-latin-400-normal.ttf",
+      "noto-sans-bengali-latin-ext-400-normal.ttf",
+      "noto-sans-bengali-bengali-700-normal.ttf",
+      "noto-sans-bengali-latin-700-normal.ttf",
+      "noto-sans-bengali-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 995,
+        "descent": 408
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 995,
+        "descent": 408
+      }
+    },
+    "assFamily": "Noto Sans Bengali"
+  },
+  {
+    "id": "noto-serif-bengali",
+    "family": "Noto Serif Bengali",
+    "language": "bengali",
+    "files": [
+      "noto-serif-bengali-bengali-400-normal.ttf",
+      "noto-serif-bengali-latin-400-normal.ttf",
+      "noto-serif-bengali-latin-ext-400-normal.ttf",
+      "noto-serif-bengali-bengali-700-normal.ttf",
+      "noto-serif-bengali-latin-700-normal.ttf",
+      "noto-serif-bengali-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1213,
+        "descent": 502
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1213,
+        "descent": 502
+      }
+    },
+    "assFamily": "Noto Serif Bengali"
+  },
+  {
+    "id": "noto-sans-devanagari",
+    "family": "Noto Sans Devanagari",
+    "language": "devanagari",
+    "files": [
+      "noto-sans-devanagari-devanagari-400-normal.ttf",
+      "noto-sans-devanagari-latin-400-normal.ttf",
+      "noto-sans-devanagari-latin-ext-400-normal.ttf",
+      "noto-sans-devanagari-devanagari-700-normal.ttf",
+      "noto-sans-devanagari-latin-700-normal.ttf",
+      "noto-sans-devanagari-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1348,
+        "descent": 558
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1348,
+        "descent": 558
+      }
+    },
+    "assFamily": "Noto Sans Devanagari"
+  },
+  {
+    "id": "noto-serif-devanagari",
+    "family": "Noto Serif Devanagari",
+    "language": "devanagari",
+    "files": [
+      "noto-serif-devanagari-devanagari-400-normal.ttf",
+      "noto-serif-devanagari-latin-400-normal.ttf",
+      "noto-serif-devanagari-latin-ext-400-normal.ttf",
+      "noto-serif-devanagari-devanagari-700-normal.ttf",
+      "noto-serif-devanagari-latin-700-normal.ttf",
+      "noto-serif-devanagari-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1407,
+        "descent": 792
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1407,
+        "descent": 792
+      }
+    },
+    "assFamily": "Noto Serif Devanagari"
+  },
+  {
+    "id": "noto-sans-tamil",
+    "family": "Noto Sans Tamil",
+    "language": "tamil",
+    "files": [
+      "noto-sans-tamil-tamil-400-normal.ttf",
+      "noto-sans-tamil-latin-400-normal.ttf",
+      "noto-sans-tamil-latin-ext-400-normal.ttf",
+      "noto-sans-tamil-tamil-700-normal.ttf",
+      "noto-sans-tamil-latin-700-normal.ttf",
+      "noto-sans-tamil-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 870,
+        "descent": 370
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 870,
+        "descent": 370
+      }
+    },
+    "assFamily": "Noto Sans Tamil"
+  },
+  {
+    "id": "noto-serif-tamil",
+    "family": "Noto Serif Tamil",
+    "language": "tamil",
+    "files": [
+      "noto-serif-tamil-tamil-400-normal.ttf",
+      "noto-serif-tamil-latin-400-normal.ttf",
+      "noto-serif-tamil-latin-ext-400-normal.ttf",
+      "noto-serif-tamil-tamil-700-normal.ttf",
+      "noto-serif-tamil-latin-700-normal.ttf",
+      "noto-serif-tamil-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1069,
+        "descent": 492
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1069,
+        "descent": 492
+      }
+    },
+    "assFamily": "Noto Serif Tamil"
+  },
+  {
+    "id": "noto-nastaliq-urdu",
+    "family": "Noto Nastaliq Urdu",
+    "language": "arabic",
+    "files": [
+      "noto-nastaliq-urdu-arabic-400-normal.ttf",
+      "noto-nastaliq-urdu-latin-400-normal.ttf",
+      "noto-nastaliq-urdu-latin-ext-400-normal.ttf",
+      "noto-nastaliq-urdu-arabic-700-normal.ttf",
+      "noto-nastaliq-urdu-latin-700-normal.ttf",
+      "noto-nastaliq-urdu-latin-ext-700-normal.ttf"
+    ],
+    "metrics": {
+      "regular": {
+        "units": 1000,
+        "ascent": 1904,
+        "descent": 596
+      },
+      "bold": {
+        "units": 1000,
+        "ascent": 1904,
+        "descent": 596
+      }
+    },
+    "assFamily": "Noto Nastaliq Urdu"
   }
 ]

@@ -132,7 +132,7 @@ describe('subtitle rendering and storage',()=>{
     expect(srtTime(59.9996)).toBe('00:01:00,000');
     const p=fixture();p.segments[0].english='Line one\nLine two';
     expect(generateSrt(p,'english')).toContain('00:00:00,000 --> 00:00:03,000\nLine one\nLine two');
-    expect(generateAss(p)).toContain('Line one\\NLine two');
+    expect(generateAss(p)).toContain('Line one\u200e\\N\u200eLine two');
   });
   it('roundtrips project history, requests and approvals',()=>{
     const p=fixture();expect(parseProject(JSON.stringify(p))).toEqual(p);
