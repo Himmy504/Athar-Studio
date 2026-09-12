@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 Beta 1 — 2026-09-12
 
 - Added sequential translation batches with adjustable prompt limits, saved progress, and validation of each batch before import.
 
@@ -8,6 +8,7 @@
 - Added French, Spanish, Portuguese, German, Turkish, Indonesian, Malay, Russian, Urdu, and Persian translation targets.
 - Added language-aware prompts, response validation, review, glossary, subtitle labels and filenames. Changing language clears old translations and approvals and can be undone.
 - Bundled Cyrillic font subsets and added right-to-left translation editing for Urdu and Persian.
+- Applied the blue Athar Studio icon to the packaged executable and running Windows taskbar window.
 
 
 ## 0.3.0 Beta 1 — 2026-09-11

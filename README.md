@@ -21,7 +21,7 @@ Select a passage, transcribe the Arabic, review a translation, and style the fin
 
 ## Getting started
 
-Athar Studio is currently a **Windows x64 beta (0.3.0)**. Speech models download separately inside the app.
+Athar Studio is currently a **Windows x64 beta (0.4.0 Beta 1)**. Speech models download separately inside the app.
 
 1. Import an audio or video file and select an excerpt.
 2. Download a speech model and transcribe the Arabic.
