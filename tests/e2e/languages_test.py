@@ -33,7 +33,9 @@ with sync_playwright() as pw:
         page.get_by_role('button',name='Import for review',exact=True).click()
         expect(page.get_by_label(name+' caption 1',exact=True)).to_have_value(text)
         expect(page.get_by_label(name+' caption 1',exact=True)).to_have_attribute('dir','rtl' if code in ['ur','fa'] else 'ltr')
-        page.get_by_label('Caption preset').select_option('Clean')
+        page.get_by_role('button',name='Browse caption styles',exact=True).click()
+        page.get_by_role('button',name='Apply Minimal',exact=True).click()
+        page.get_by_role('button',name='Captions',exact=True).click()
         if code in ['ur','fa']:
             expect(page.get_by_label(name.lower()+' caption font',exact=True)).to_have_value('Noto Naskh Arabic')
         page.locator('.source-player').evaluate('el=>{el.currentTime=2.7}')
