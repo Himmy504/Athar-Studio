@@ -17,7 +17,7 @@ import { useReviewPlayback } from './useReviewPlayback';
 import { PLAYBACK_RATES } from './playback';
 import { useCaptionFonts } from './fonts';
 import { DEFAULT_EXPORT, EXPORT_SPEEDS, EXPORT_FRAME_RATES } from './exportSettings';
-import type { Device, ExportSettings, Progress, Project, RuntimeStatus } from './types';
+import type { Device, ExportSettings, Progress, Project, RuntimeStatus, Style } from './types';
 
 type Dialog = 'translate'|'models'|'glossary'|'export'|'help'|'new'|'retranscribe'|null;
 export default function App(){
@@ -29,14 +29,18 @@ export default function App(){
   const [device,setDevice]=useState<Device>(()=>localStorage.getItem('athar-device')==='cpu'?'cpu':'auto'),[lastDevice,setLastDevice]=useState('Auto');
   const [response,setResponse]=useState(''),[pasteError,setPasteError]=useState(''),[exportFormat,setExportFormat]=useState('mp4'),[exported,setExported]=useState('');
   const [time,setTime]=useState(0),[trim,setTrim]=useState<{start:number;end:number}|null>(null),[trimKey,setTrimKey]=useState(0),[missing,setMissing]=useState(false);
+  const [stylePreview,setStylePreview]=useState<Style|null>(null),[selectedIds,setSelectedIds]=useState<string[]>([]);
+  useEffect(()=>{setSelectedIds([]);setStylePreview(null);},[p.id]);
+  const previewProject=useMemo(()=>stylePreview?{...p,style:stylePreview}:p,[p,stylePreview]);
   const [exportConfirmed,setExportConfirmed]=useState(false),[missingPreview,setMissingPreview]=useState(false);
   const player=useRef<HTMLVideoElement>(null),fileInput=useRef<HTMLInputElement>(null),jobRef=useRef<Progress|null>(null),latest=useRef(p),latestPath=useRef(path);
   latest.current=p;
   latestPath.current=path;
   const notify=useCallback((message:string)=>setNotice(message.replace(/^Error:\s*/,'')),[]);
   const playback=useReviewPlayback(p,player,setTime,notify,!!job);
-  const captionFonts=useCaptionFonts(p.style);
+  const captionFonts=useCaptionFonts(previewProject.style);
   const ass=useMemo(()=>generateAss(p),[p,captionFonts.ready]);
+  const previewAss=useMemo(()=>stylePreview?generateAss(previewProject):ass,[previewProject,stylePreview,ass,captionFonts.ready]);
   useEffect(()=>{
     if(!/^(Prompt copied|Repair prompt copied|Project opened|Project saved|Transcript ready|Translation imported|Subtitles exported|Export complete|Style saved)/.test(notice))return;
     const timer=setTimeout(()=>setNotice(''),3500);return()=>clearTimeout(timer);
@@ -207,9 +211,9 @@ export default function App(){
     {missing&&<div className="missing-banner">Source media not found.<button disabled={busy} onClick={()=>void importMedia(true)}>Relink source</button></div>}
     {missingPreview&&!missing&&<div className="missing-banner">Playback cache not found.<button disabled={busy} onClick={()=>void rebuildPlayback()}>Restore playback</button></div>}
     <main className={'workspace '+(busy?'processing':'')}>
-      <Preview project={p} player={player} time={time} playback={playback} ass={ass} fontsReady={captionFonts.ready} fontError={captionFonts.error} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy}/>
-      <ReviewPanel project={p} update={edit} selectedId={playback.selectedId} onSelect={id=>playback.activate(id)} onPlay={id=>playback.activate(id,true)} onNavigate={playback.navigate} onPrompt={()=>void copyPrompt()} onPaste={()=>setDialog('translate')} onGemini={()=>void launchGemini().catch(e=>notify(String(e)))} onTranscribe={()=>void transcribe()} busy={busy} notify={notify}/>
-      <StylePanel project={p} update={edit} notify={notify}/>
+      <Preview project={previewProject} player={player} time={time} playback={playback} ass={previewAss} fontsReady={captionFonts.ready} fontError={captionFonts.error} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy} update={edit} previewing={!!stylePreview}/>
+      <ReviewPanel project={p} update={edit} selectedId={playback.selectedId} selectedIds={selectedIds} onSelection={setSelectedIds} onSelect={id=>playback.activate(id)} onPlay={id=>playback.activate(id,true)} onNavigate={playback.navigate} onPrompt={()=>void copyPrompt()} onPaste={()=>setDialog('translate')} onGemini={()=>void launchGemini().catch(e=>notify(String(e)))} onTranscribe={()=>void transcribe()} busy={busy} notify={notify}/>
+      <StylePanel project={p} update={edit} notify={notify} selectedId={playback.selectedId} selectedIds={selectedIds.filter(id=>p.segments.some(s=>s.id===id))} onPreview={setStylePreview}/>
     </main>
     <ClipStrip key={p.id+'-'+trimKey} project={p} busy={busy} onImport={()=>p.media?setDialog('new'):void importMedia()} onTrim={changeTrim} onTranscribe={()=>void transcribe()} time={time} onSeek={playback.seek}/>
     {job&&<div className="job-panel" role="status"><div className="job-spinner"><LoaderCircle size={22}/></div><div><strong>{job.message}</strong><div className="job-progress"><span style={{width:Math.max(2,job.percent)+'%'}}/></div><small>{Math.round(job.percent)}%</small></div><button className="secondary-button" onClick={()=>void native.cancel(job.jobId).catch(e=>notify(String(e)))}><Pause size={14}/>Cancel</button></div>}

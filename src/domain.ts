@@ -29,8 +29,10 @@ export function applySavedAssets(current:Project,snapshot:Project,saved:Project)
   if(current.id!==snapshot.id)return current;
   const background=current.style.background.path===snapshot.style.background.path?saved.style.background.path:current.style.background.path;
   const logo=current.style.logoPath===snapshot.style.logoPath?saved.style.logoPath:current.style.logoPath;
-  if(background===current.style.background.path&&logo===current.style.logoPath)return current;
-  return {...current,style:{...current.style,logoPath:logo,background:{...current.style.background,path:background}}};
+  let brand=current.style.brand;
+  if(brand)brand={...brand,logos:brand.logos.map(l=>{const before=snapshot.style.brand?.logos.find(b=>b.id===l.id),after=saved.style.brand?.logos.find(b=>b.id===l.id);return before&&after&&l.path===before.path?{...l,path:after.path}:l;})};
+  if(background===current.style.background.path&&logo===current.style.logoPath&&JSON.stringify(brand)===JSON.stringify(current.style.brand))return current;
+  return {...current,style:{...current.style,brand,logoPath:logo,background:{...current.style.background,path:background}}};
 }
 export function newSegment(start: number, end: number, arabic = ''): Segment {
   return { id: crypto.randomUUID(), start, end, originalArabic: arabic, arabic, inputArabic: arabic, english: '', proposedArabic: null,
@@ -170,18 +172,32 @@ export function mergeSegment(p: Project, id: string): Project {
 
 const typographySchema = z.object({ font: z.string().refine(name=>catalog.some(font=>font.family===name),'Choose a bundled caption font'), size: z.number().min(18).max(300), bold: z.boolean(), italic: z.boolean().default(false), underline: z.boolean().default(false), color: z.string().regex(/^#[0-9a-f]{6}$/i), outlineColor: z.string().regex(/^#[0-9a-f]{6}$/i).default('#161910'), shadowColor: z.string().regex(/^#[0-9a-f]{6}$/i).default('#000000'), outline: z.number().min(0).max(16), shadow: z.number().min(0).max(20), spacing: z.number().min(-3).max(20) });
 const colorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
+const anchorSchema = z.enum(['top-left','top-center','top-right','middle-left','middle-center','middle-right','bottom-left','bottom-center','bottom-right']);
+const placementSchema = z.object({anchor:anchorSchema,padding:z.number().min(0).max(400),timing:z.enum(['all','intro','outro']),seconds:z.number().min(.1).max(600)});
+const brandLabelSchema = placementSchema.extend({enabled:z.boolean(),font:typographySchema.shape.font,size:z.number().min(18).max(120),color:colorSchema,
+  bold:z.boolean().default(false),italic:z.boolean().default(false),underline:z.boolean().default(false),alignment:z.enum(['left','center','right']).default('left'),
+  outline:z.number().min(0).max(16).default(0),outlineColor:colorSchema.default('#161910'),shadow:z.number().min(0).max(20).default(0),shadowColor:colorSchema.default('#000000'),
+  spacing:z.number().min(-3).max(20).default(0),lineHeight:z.number().min(80).max(240).default(145),width:z.number().min(20).max(100).default(70),
+  backgroundEnabled:z.boolean().default(false),background:colorSchema,backgroundOpacity:z.number().min(0).max(100),textPadding:z.number().min(0).max(80).default(18),
+  borderColor:colorSchema.default('#CDBD8C'),borderWidth:z.number().min(0).max(8).default(0),cornerRadius:z.number().min(0).max(80).default(12)});
+const animationSchema = z.enum(['none','fade','slide','pop']);
 export const styleSchema = z.object({
   name: z.string(), mode: z.enum(['english', 'bilingual']), ratio: z.enum(['9:16', '1:1', '16:9']), arabic: typographySchema, english: typographySchema,
   alignment: z.enum(['left', 'center', 'right']), captionY: z.number().min(15).max(88), lineGap: z.number().min(0).max(60), fade: z.boolean(),
   panel: z.object({preset:z.enum(['none','solid','glass','gold','paper','emerald','azure','midnight']),fill:colorSchema,border:colorSchema,opacity:z.number().min(10).max(100),width:z.number().min(50).max(94),padding:z.number().min(12).max(80),borderWidth:z.number().min(0).max(8)}).default(()=>createPanel()),
   background: z.object({ kind: z.enum(['original', 'solid', 'gradient', 'image', 'video']), color: colorSchema, color2: colorSchema, path: z.string(), fit: z.enum(['cover', 'contain']), dim: z.number().min(0).max(90), blur: z.number().min(0).max(30) }),
   showScholar: z.boolean(), showSource: z.boolean(), logoPath: z.string(),
+  captionX: z.number().min(0).max(100).optional(), animation:animationSchema.optional(),
+  canvas:z.object({maxWidth:z.number().min(20).max(100),marginX:z.number().min(0).max(35),marginY:z.number().min(0).max(35),safe:z.boolean(),titleSafe:z.boolean(),logoSafe:z.boolean(),grid:z.boolean(),center:z.boolean(),snap:z.boolean()}).optional(),
+  brand:z.object({scholar:brandLabelSchema,source:brandLabelSchema,channel:brandLabelSchema,sourceCard:brandLabelSchema.extend({qr:z.boolean()}),logos:z.array(placementSchema.extend({id:z.string(),path:z.string(),size:z.number().min(24).max(500),opacity:z.number().min(0).max(100),watermark:z.boolean()})).max(8)}).optional(),
 });
+export const overridesSchema = z.object({captionX:z.number().min(0).max(100).optional(),captionY:z.number().min(15).max(88).optional(),arabicSize:z.number().min(18).max(300).optional(),englishSize:z.number().min(18).max(300).optional(),panel:styleSchema.shape.panel.optional(),alignment:styleSchema.shape.alignment.optional(),animation:animationSchema.optional()});
 const segmentSchema = z.object({
   id: z.string(), start: z.number().finite(), end: z.number().finite(), originalArabic: z.string(), arabic: z.string(), english: z.string(), inputArabic: z.string().optional(),
   proposedArabic: z.string().nullable(), correctionNote: z.string(), correctionResolved: z.boolean(), uncertain: z.boolean(), uncertaintyResolved: z.boolean(),
   approval: z.object({ arabic: z.string(), english: z.string(), start: z.number(), end: z.number() }).nullable(),
   emphasis: z.array(z.object({ text: z.string(), color: colorSchema, bold: z.boolean() })),
+  overrides: overridesSchema.optional(),
 });
 const projectSchema = z.object({
   translationPromptLimit:z.union([z.literal(6000),z.literal(10000),z.literal(16000)]).optional(),
