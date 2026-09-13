@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Maximize2, Pause, Play, Repeat2, RotateCcw, Upload, Volume2, VolumeX } from 'lucide-react';
 import { mediaUrl } from './bridge';
 import { dimensions } from './subtitles';
-import { fontFiles } from './fonts';
+import { fontFiles, loadCaptionFonts } from './fonts';
 import { PLAYBACK_RATES } from './playback';
 import type { ReviewPlayback } from './useReviewPlayback';
 import { formatTime } from './domain';
 import type { Project } from './types';
+import { brandSettings, canvasSettings, timeRange } from './inspectorModel';
+import { anchorBox } from './brandRender';
+import { CanvasGuides } from './CanvasGuides';
 
 interface Octopus { setTrack: (ass: string) => void; setCurrentTime: (time: number) => void; dispose: () => void }
 declare global { interface Window { SubtitlesOctopus: new (options: Record<string, unknown>) => Octopus } }
@@ -20,8 +23,9 @@ function loadEngine() {
   });
   return enginePromise;
 }
-export function Preview({project:p,player,time,playback,ass,fontsReady,fontError,onImport,busy}:{
-  project:Project;player:RefObject<HTMLVideoElement|null>;time:number;playback:ReviewPlayback;ass:string;fontsReady:boolean;fontError:string;onImport:()=>void;busy:boolean;
+export function Preview({project:p,player,time,playback,ass,fontError,onImport,busy,update,previewing}:{
+  update:(fn:(p:Project)=>Project,key?:string)=>void;previewing:boolean;
+  project:Project;player:RefObject<HTMLVideoElement|null>;time:number;playback:ReviewPlayback;ass:string;fontError:string;onImport:()=>void;busy:boolean;
 }) {
   const [muted,setMuted]=useState(false),[error,setError]=useState('');
   const canvas=useRef<HTMLCanvasElement>(null),engine=useRef<Octopus|null>(null),bgVideo=useRef<HTMLVideoElement>(null),container=useRef<HTMLDivElement>(null);
@@ -29,15 +33,14 @@ export function Preview({project:p,player,time,playback,ass,fontsReady,fontError
   const assRef=useRef(ass),timeRef=useRef(time);assRef.current=ass;timeRef.current=time;
   const duration=p.clip.end-p.clip.start;
   useEffect(()=>{
-    if(!fontsReady)return;
     let disposed=false;
-    void loadEngine().then(()=>{
+    void Promise.all([loadEngine(),loadCaptionFonts(p.style)]).then(()=>{
       if(disposed||!canvas.current)return;
       engine.current=new window.SubtitlesOctopus({canvas:canvas.current,subContent:assRef.current,fonts:files.map(file=>'/fonts/'+file),workerUrl:'/libass/subtitles-octopus-worker.js',legacyWorkerUrl:'/libass/subtitles-octopus-worker-legacy.js',fallbackFont:'/fonts/noto-naskh-arabic-arabic-400-normal.ttf',targetFps:30,libassMemoryLimit:64,libassGlyphLimit:8,
         onReady:()=>{engine.current?.setCurrentTime(timeRef.current);setError('');},onError:()=>setError('Caption preview could not render. Reopen the project to retry.')});
     }).catch(error=>setError(String(error)));
     return()=>{disposed=true;engine.current?.dispose();engine.current=null;};
-  },[p.style.ratio,fontKey,fontsReady]);
+  },[p.style.ratio,fontKey]);
   useEffect(()=>{const timer=setTimeout(()=>{engine.current?.setTrack(ass);engine.current?.setCurrentTime(timeRef.current);},100);return()=>clearTimeout(timer);},[ass]);
   useEffect(()=>{engine.current?.setCurrentTime(time);},[time]);
   useEffect(()=>{
@@ -49,7 +52,7 @@ export function Preview({project:p,player,time,playback,ass,fontsReady,fontError
   const bg=p.style.background,original=bg.kind==='original'&&p.media?.hasVideo;
   const visualStyle={objectFit:(bg.fit==='cover'?'cover':'contain') as 'cover'|'contain',filter:bg.blur?'blur('+(bg.blur/w*100)+'cqw)':undefined};
   return <section className="preview-panel">
-    <div className="panel-heading"><span>Preview</span><span className="muted">{p.style.ratio} · 1080p</span></div>
+    <div className="panel-heading"><span>{previewing?'Style preview · click a card to apply':'Preview'}</span><span className="muted">{p.style.ratio} · 1080p</span></div>
     <div className="canvas-area">
       <div className="video-canvas" ref={container} style={{aspectRatio:w+'/'+h,width:'min(100cqw, calc(100cqh * '+w/h+'))',background:!p.media?'#111214':bg.kind==='gradient'?'linear-gradient(180deg,'+bg.color+','+bg.color2+')':bg.kind==='solid'?bg.color:'#000000'}}>
         <video ref={player} src={p.media?mediaUrl(p.media.previewPath||p.media.path):undefined} className={'source-player '+(original?'':'audio-source')} style={visualStyle} muted={muted}
@@ -57,8 +60,9 @@ export function Preview({project:p,player,time,playback,ass,fontsReady,fontError
         {bg.kind==='image'&&bg.path&&<img className="canvas-background" src={mediaUrl(bg.path)} style={visualStyle} alt="Selected background"/>}
         {bg.kind==='video'&&bg.path&&<video ref={bgVideo} className="canvas-background" src={mediaUrl(bg.path)} style={visualStyle} muted loop playsInline/>}
         <div className="canvas-dim" style={{opacity:bg.dim/100}}/>
-        {p.style.logoPath&&<div className="canvas-logo" style={{top:60/h*100+'%',right:60/w*100+'%',width:100/w*100+'%',height:100/h*100+'%'}}><img src={mediaUrl(p.style.logoPath)} alt="Channel logo" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/></div>}
+        {brandSettings(p.style).logos.map(logo=>{const range=timeRange(logo,duration);if(time<range[0]||time>=range[1])return null;const size=logo.watermark?Math.min(logo.size,64):logo.size,box=anchorBox(logo.anchor,logo.padding,size,size,w,h);return <div key={logo.id} className="canvas-logo" style={{top:box.y/h*100+'%',left:box.x/w*100+'%',width:size/w*100+'%',height:size/h*100+'%',opacity:logo.opacity/100,alignItems:'center',justifyContent:'center'}}><img src={mediaUrl(logo.path)} alt="Channel logo" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/></div>;})}
         <canvas ref={canvas} className="subtitle-canvas" width={w} height={h}/>
+        {!busy&&!previewing&&<CanvasGuides project={p} onPosition={(captionX,captionY)=>update(v=>({...v,style:{...v.style,canvas:{...canvasSettings(v.style)},captionX,captionY,name:'Custom'}}),'canvas-drag')}/>}
       </div>
       {!p.media&&<div className="preview-empty"><span>No media</span><button className="secondary-button" onClick={onImport} disabled={busy}><Upload size={15}/>Import media</button></div>}
     </div>

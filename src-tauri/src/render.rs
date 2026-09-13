@@ -131,14 +131,19 @@ pub fn export(app: &AppHandle, p: &Value, ass: &str, dest: &Path, format: &str, 
     // Cache the treated still frame before compositing time-dependent captions and branding.
     if matches!(kind,"solid"|"gradient"|"image") {graph.push_str(&format!(",loop=loop=-1:size=1:start=0,setpts=N/({}*TB)",fps));}
     graph.push_str("[background];");
-    let logo=p["style"]["logoPath"].as_str().unwrap_or("");
-    if !logo.is_empty() {
-        if !Path::new(logo).is_file() {return Err("The channel logo is missing. Select it again.".into());}
-        let index=if input_index==0 {1} else {2};
-        args.extend(["-loop".into(),"1".into(),"-framerate".into(),fps.clone(),"-i".into(),logo.into()]);
-        let logo_size=(100.0*scale).round() as u32; let margin=(60.0*scale).round() as u32;
-        graph.push_str(&format!("[{}:v:0]scale={}:{}:force_original_aspect_ratio=decrease,format=rgba[logo];[background][logo]overlay=W-w-{}:{}:shortest=1[branded];[branded]",index,logo_size,logo_size,margin,margin));
-    } else {graph.push_str("[background]");}
+    let logos=logo_settings(p,duration)?;
+    let mut previous="background".to_owned();
+    for (i,logo) in logos.iter().enumerate() {
+        if !Path::new(&logo.path).is_file() {return Err("A channel logo is missing. Select it again.".into());}
+        let index=input_index+1+i;
+        args.extend(["-loop".into(),"1".into(),"-framerate".into(),fps.clone(),"-i".into(),logo.path.clone()]);
+        let size=(logo.size*scale).round() as u32; let margin=logo.padding*scale;
+        let x=if logo.anchor.ends_with("left") {margin.to_string()} else if logo.anchor.ends_with("right") {format!("W-w-{}",margin)} else {"(W-w)/2".into()};
+        let y=if logo.anchor.starts_with("top") {margin.to_string()} else if logo.anchor.starts_with("bottom") {format!("H-h-{}",margin)} else {"(H-h)/2".into()};
+        graph.push_str(&format!("[{}:v:0]scale={}:{}:force_original_aspect_ratio=decrease,format=rgba,pad={}:{}:(ow-iw)/2:(oh-ih)/2:color=black@0,colorchannelmixer=aa={}[logo{}];[{}][logo{}]overlay={}:{}:shortest=1:enable='gte(t,{})*lt(t,{})'[brand{}];",index,size,size,size,size,logo.opacity/100.0,i,previous,i,x,y,logo.start,logo.end,i));
+        previous=format!("brand{}",i);
+    }
+    graph.push_str(&format!("[{}]",previous));
     graph.push_str("ass=filename=captions.ass:fontsdir=fonts,format=yuv420p[out]");
     args.extend(["-filter_complex".into(),graph,"-map".into(),"[out]".into(),"-map".into(),"0:a:0".into(),"-t".into(),duration.to_string(),
         "-c:v".into(),"libx264".into(),"-preset".into(),settings.preset.into(),"-crf".into(),settings.crf.into(),"-r".into(),fps,"-c:a".into(),"aac".into(),"-b:a".into(),"192k".into(),
@@ -156,7 +161,26 @@ pub fn destination(path: &str, project: &Value) -> Result<PathBuf,String> {
     for source in [project["media"]["path"].as_str(),project["style"]["background"]["path"].as_str(),project["style"]["logoPath"].as_str()].into_iter().flatten().filter(|s|!s.is_empty()) {
         if key(&dest)==key(Path::new(source)) {return Err("Choose an export path different from your source assets.".into());}
     }
+    if let Some(logos)=project["style"]["brand"]["logos"].as_array() { for logo in logos {
+        if let Some(source)=logo["path"].as_str().filter(|s|!s.is_empty()) {if key(&dest)==key(Path::new(source)){return Err("Choose an export path different from your logos.".into());}}
+    }}
     Ok(dest)
+}
+#[derive(Debug)]
+struct LogoSettings { path:String, anchor:String, size:f64, opacity:f64, padding:f64, start:f64, end:f64 }
+fn logo_settings(p:&Value,duration:f64)->Result<Vec<LogoSettings>,String> {
+    if p["style"]["brand"].is_object() {
+        let logos=p["style"]["brand"]["logos"].as_array().ok_or("Invalid brand logos")?;
+        if logos.len()>8{return Err("Use up to eight logos".into());}
+        logos.iter().map(|l|{
+            let bounded=|key:&str,min:f64,max:f64|->Result<f64,String>{let n=number(l,key)?;if !(min..=max).contains(&n){return Err(format!("Invalid logo {}",key));}Ok(n)};
+            let anchor=l["anchor"].as_str().ok_or("Missing logo anchor")?;
+            if !["top-left","top-center","top-right","middle-left","middle-center","middle-right","bottom-left","bottom-center","bottom-right"].contains(&anchor){return Err("Invalid logo position".into());}
+            let size=bounded("size",24.0,500.0)?;let seconds=bounded("seconds",0.1,600.0)?;
+            let (start,end)=match l["timing"].as_str(){Some("all")=>(0.0,duration),Some("intro")=>(0.0,seconds.min(duration)),Some("outro")=>((duration-seconds).max(0.0),duration),_=>return Err("Invalid logo timing".into())};
+            Ok(LogoSettings{path:l["path"].as_str().ok_or("Invalid logo path")?.into(),anchor:anchor.into(),size:if l["watermark"]==true{size.min(64.0)}else{size},opacity:bounded("opacity",0.0,100.0)?,padding:bounded("padding",0.0,400.0)?,start,end})
+        }).collect()
+    }else{let path=p["style"]["logoPath"].as_str().unwrap_or("");Ok(if path.is_empty(){vec![]}else{vec![LogoSettings{path:path.into(),anchor:"top-right".into(),size:100.0,opacity:100.0,padding:60.0,start:0.0,end:duration}]})}
 }
 #[cfg(test)]
 mod tests {

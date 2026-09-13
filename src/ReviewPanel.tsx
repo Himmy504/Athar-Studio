@@ -6,7 +6,8 @@ import { approve, arabicDifference, editSegment, formatTime, isApproved, isCorre
 import { Field, Modal } from './components';
 import type { Project, Segment } from './types';
 
-export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavigate,onPrompt,onPaste,onGemini,onTranscribe,busy,notify}:{
+export function ReviewPanel({project:p,update,selectedId,selectedIds,onSelection,onSelect,onPlay,onNavigate,onPrompt,onPaste,onGemini,onTranscribe,busy,notify}:{
+  selectedIds:string[];onSelection:(ids:string[])=>void;
   project:Project; update:(fn:(p:Project)=>Project,key?:string)=>void;selectedId:string|null;onSelect:(id:string)=>void;onPlay:(id:string)=>void;onNavigate:(delta:number)=>void;onPrompt:()=>void;onPaste:()=>void;onGemini:()=>void;onTranscribe:()=>void;busy:boolean;notify:(s:string)=>void;
 }){
   const [filter,setFilter]=useState<'all'|'review'|'approved'>('all'),[expanded,setExpanded]=useState<string|null>(null),[split,setSplit]=useState<Segment|null>(null);
@@ -39,13 +40,14 @@ export function ReviewPanel({project:p,update,selectedId,onSelect,onPlay,onNavig
     </div>
     {batch&&<div className="translation-progress" role="status"><span>{batch.remainingIds.length?`Batch ${batch.batchesDone+1} · ${batch.completedIds.length}/${batch.completedIds.length+batch.remainingIds.length} captions imported`:'All batches imported'}{p.request&&` · ${p.request.segmentIds.length} in this prompt`}</span><button className="text-button" disabled={busy} onClick={()=>update(restartTranslationBatches)}>Restart batches</button></div>}
     <div className="caption-toolbar"><div className="caption-tabs">{(['all','review','approved'] as const).map(f=><button key={f} className={filter===f?'active':''} onClick={()=>setFilter(f)}>{f==='all'?'All captions':f==='review'?'Needs review':'Approved'}</button>)}</div><button className="icon-button" aria-label="Add caption manually" title="Add caption manually" onClick={add} disabled={busy||!p.media}><Plus size={17}/></button></div>
+    {p.segments.length>0&&<div className="batch-selection"><button onClick={()=>onSelection(filtered.map(s=>s.id))}>Select visible</button><button disabled={!selectedIds.length} onClick={()=>onSelection([])}>Clear selection</button><span>{selectedIds.filter(id=>p.segments.some(s=>s.id===id)).length} selected</span></div>}
     <div className="caption-list">
       {!p.segments.length?<div className="empty-captions"><h3>No transcript</h3><p>{p.media?'Transcribe the selected excerpt or add captions manually.':'Import media to start transcribing.'}</p>{p.media&&<><button className="secondary-button" onClick={onTranscribe} disabled={busy}><Languages size={15}/>Transcribe Arabic</button><button className="text-button" disabled={busy} onClick={add}>Add captions manually</button></>}</div>:
       filtered.length===0?<div className="empty-filter"><CheckCheck size={30}/><p>{filter==='review'?'All captions approved.':'No matching captions.'}</p></div>:
       filtered.map(s=>{
         const i=p.segments.findIndex(v=>v.id===s.id),open=expanded===s.id,checked=isApproved(s);
         return <article key={s.id} data-caption-id={s.id} aria-current={selectedId===s.id?'true':undefined} onFocusCapture={()=>onSelect(s.id)} onClick={()=>onSelect(s.id)} className={'caption-card '+(open?'expanded ':'')+(selectedId===s.id?'selected ':'')+(checked?'approved':'')}>
-          <div className="caption-top"><button className="caption-time" onClick={()=>onPlay(s.id)} aria-label={'Play caption '+(i+1)}><Play size={11}/><span>{String(i+1).padStart(2,'0')}</span><b>{formatTime(s.start)} – {formatTime(s.end)}</b></button>
+          <div className="caption-top"><input type="checkbox" aria-label={'Select caption '+(i+1)+' for styling'} checked={selectedIds.includes(s.id)} onChange={e=>onSelection(e.target.checked?[...selectedIds,s.id]:selectedIds.filter(id=>id!==s.id))}/><button className="caption-time" onClick={()=>onPlay(s.id)} aria-label={'Play caption '+(i+1)}><Play size={11}/><span>{String(i+1).padStart(2,'0')}</span><b>{formatTime(s.start)} – {formatTime(s.end)}</b></button>{s.overrides&&Object.keys(s.overrides).length>0&&<span className="override-badge">Styled</span>}
             <div className="caption-badges">{isCorrected(s)&&<span className={'correction-badge '+(s.correctionResolved?'resolved':'')}>AI-corrected Arabic</span>}
             <button className="icon-button" aria-label={(open?'Collapse':'Expand')+' caption '+(i+1)} onClick={()=>setExpanded(open?null:s.id)}>{open?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button></div>
           </div>

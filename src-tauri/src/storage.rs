@@ -63,8 +63,10 @@ pub fn save(app: &AppHandle, path: Option<String>, raw: String) -> Result<String
         let dest = PathBuf::from(&path);
         let assets = dest.with_extension("assets");
         fs::create_dir_all(&assets).map_err(|e| e.to_string())?;
-        for pointer in ["/style/background/path", "/style/logoPath"] {
-            if let Some(source) = value.pointer(pointer).and_then(Value::as_str).filter(|s| !s.is_empty()).map(PathBuf::from) {
+        let mut pointers=vec!["/style/background/path".to_owned(),"/style/logoPath".to_owned()];
+        if let Some(logos)=value["style"]["brand"]["logos"].as_array(){pointers.extend((0..logos.len()).map(|i|format!("/style/brand/logos/{}/path",i)));}
+        for pointer in pointers {
+            if let Some(source) = value.pointer(&pointer).and_then(Value::as_str).filter(|s| !s.is_empty()).map(PathBuf::from) {
                 if source.is_file() {
                     if source.parent()==Some(assets.as_path()){continue;}
                     let file = source.file_name().ok_or("Invalid asset name")?.to_string_lossy();
@@ -78,7 +80,7 @@ pub fn save(app: &AppHandle, path: Option<String>, raw: String) -> Result<String
                         temporary.as_file().sync_all().map_err(|e|e.to_string())?;
                         temporary.persist(&target).map_err(|e|e.to_string())?;
                     }
-                    if let Some(v) = value.pointer_mut(pointer) { *v = Value::String(target.to_string_lossy().into()); }
+                    if let Some(v) = value.pointer_mut(&pointer) { *v = Value::String(target.to_string_lossy().into()); }
                 }
             }
         }

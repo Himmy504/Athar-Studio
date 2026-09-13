@@ -10,6 +10,7 @@ The MIT license in this repository covers Athar Studio's original source. It doe
 | React | https://github.com/facebook/react |
 | Lucide | https://github.com/lucide-icons/lucide |
 | Zod | https://github.com/colinhacks/zod |
+| QR Code Generator (MIT, Kazuhiko Arase) | https://github.com/kazuhikoarase/qrcode-generator |
 | SubtitlesOctopus / libass-wasm | https://github.com/libass/JavascriptSubtitlesOctopus |
 | libass | https://github.com/libass/libass |
 | whisper.cpp CPU and Vulkan runtime | https://github.com/ggml-org/whisper.cpp/tree/371b5a7561823ab2bb32142d2751e35e7534727b |

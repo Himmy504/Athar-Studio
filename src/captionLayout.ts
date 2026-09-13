@@ -1,5 +1,7 @@
 import type { Segment, Style, Typography } from './types';
 import { cssFontSize, fontMetrics } from './fontSizing';
+import { canvasSettings, effectiveStyle } from './inspectorModel';
+import type { Project } from './types';
 
 export interface TextLine { start: number; end: number; text: string }
 let context: CanvasRenderingContext2D | null = null;
@@ -37,8 +39,10 @@ export function wrapCaption(text: string, width: number, measure: (text:string)=
   return lines;
 }
 export function panelLayout(style: Style, segment: Segment, width: number, height: number) {
-  const panel=style.panel, panelWidth=Math.round(width*panel.width/100), edge=panel.preset==='azure'||panel.preset==='emerald'?30:14;
-  const inset=panel.padding+edge+panel.borderWidth*2, textArea=panelWidth-inset*2;
+  const panel=style.panel, c=canvasSettings(style), bare=panel.preset==='none';
+  const panelWidth=Math.round(width*(style.canvas?Math.min(bare?c.maxWidth:panel.width,c.maxWidth,100-c.marginX*2):panel.width)/100), edge=bare?0:panel.preset==='azure'||panel.preset==='emerald'?30:14;
+  const padding=bare?0:panel.padding;
+  const inset=bare?0:padding+edge+panel.borderWidth*2, textArea=Math.max(1,panelWidth-inset*2);
   const bold=segment.emphasis.some(e=>e.bold);
   const measure=(text:string,type:Typography,language:'arabic'|'english')=>Math.max(textWidth(text,type,language),bold?textWidth(text,{...type,bold:true},language):0)+type.outline*2+4;
   const layoutLines=(language:'arabic'|'english')=>wrapCaption(segment[language],textArea,text=>measure(text,style[language],language)).map(line=>{
@@ -51,7 +55,27 @@ export function panelLayout(style: Style, segment: Segment, width: number, heigh
   });
   const arabic=style.mode==='bilingual'?layoutLines('arabic'):[],english=layoutLines('english');
   const arabicPitch=Math.max(0,...arabic.map(line=>line.height)),englishPitch=Math.max(0,...english.map(line=>line.height)),gap=arabic.length?style.lineGap:0;
-  const panelHeight=Math.ceil(arabic.length*arabicPitch+english.length*englishPitch+gap+panel.padding*2);
-  const x=(width-panelWidth)/2,top=Math.max(20,Math.min(height-panelHeight-20,height*style.captionY/100-panelHeight/2));
-  return {x,top,width:panelWidth,height:panelHeight,inset,arabic,english,arabicPitch,englishPitch,gap};
+  const panelHeight=Math.ceil(arabic.length*arabicPitch+english.length*englishPitch+gap+padding*2);
+  const marginX=style.canvas?width*c.marginX/100:0,marginY=style.canvas?height*c.marginY/100:20;
+  const x=Math.max(marginX,Math.min(width-panelWidth-marginX,width*(style.captionX??50)/100-panelWidth/2)),top=Math.max(marginY,Math.min(height-panelHeight-marginY,height*style.captionY/100-panelHeight/2));
+  return {x,top,width:panelWidth,height:panelHeight,inset,padding,arabic,english,arabicPitch,englishPitch,gap};
+}
+/** Shrink to the largest shared size that fits every caption, without editing its text. */
+export function fitCaptionsSafely(p: Project): { project: Project; remaining: number } {
+  const project=structuredClone(p),s=project.style,c={...canvasSettings(s)};
+  s.canvas=c;c.maxWidth=Math.min(c.maxWidth,100-2*c.marginX);
+  const [w,h]=s.ratio==='16:9'?[1920,1080]:s.ratio==='1:1'?[1080,1080]:[1080,1920];
+  const fits=(style:Style,segment:Segment)=>panelLayout(style,segment,w,h).height<=h*(1-2*c.marginY/100);
+  for(let i=0;i<282&&project.segments.some(seg=>!seg.overrides&&!fits(s,seg));i++) {
+    s.arabic.size=Math.max(18,s.arabic.size-1);s.english.size=Math.max(18,s.english.size-1);
+  }
+  let remaining=0;
+  project.segments=project.segments.map(seg=>{
+    let st=effectiveStyle(s,seg);
+    if(seg.overrides){for(let i=0;i<282&&!fits(st,seg);i++) {st={...st,arabic:{...st.arabic,size:Math.max(18,st.arabic.size-1)},english:{...st.english,size:Math.max(18,st.english.size-1)}};}
+      seg.overrides={...seg.overrides,arabicSize:st.arabic.size,englishSize:st.english.size};}
+    if(!fits(st,seg))remaining++;
+    return seg;
+  });
+  s.name='Custom';return {project,remaining};
 }

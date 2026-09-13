@@ -4,6 +4,8 @@ import { panelDrawings } from './panelDrawing';
 import { assFontFamily, assFontSize } from './fontSizing';
 import { targetLanguage } from './languages';
 import { directionalText } from './textDirection';
+import { effectiveStyle } from './inspectorModel';
+import { brandEvents } from './brandRender';
 
 export function dimensions(ratio: Style['ratio']): [number, number] {
   return ratio === '16:9' ? [1920, 1080] : ratio === '1:1' ? [1080, 1080] : [1080, 1920];
@@ -50,9 +52,6 @@ function styledText(s: Segment, lang: 'arabic' | 'english', typography: Typograp
 }
 export function generateAss(p: Project) {
   const st = p.style, [w, h] = dimensions(st.ratio);
-  const alignment = st.alignment === 'left' ? 1 : st.alignment === 'right' ? 3 : 2;
-  const x = alignment === 1 ? 80 : alignment === 3 ? w - 80 : w / 2;
-  const y = Math.round(h * st.captionY / 100);
   const style = (name: string, t: Typography) => 'Style: ' + [name, assFontFamily(t.font).replace(/,/g, ''), assFontSize(t,name==='Arabic'?'arabic':'english'), assColor(t.color), assColor(t.color), assColor(t.outlineColor ?? '#161910'), assColor(t.shadowColor ?? '#000000').replace('&H00','&H80'), t.bold ? -1 : 0, t.italic ? -1 : 0, t.underline ? -1 : 0, 0, 100, 100, t.spacing, 0, 1, t.outline, t.shadow, 2, 80, 80, 80, -1].join(',');
   const header = [
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: ' + w, 'PlayResY: ' + h, 'WrapStyle: 0', 'ScaledBorderAndShadow: yes', '',
@@ -63,21 +62,29 @@ export function generateAss(p: Project) {
   ];
   const line = (start: number, end: number, name: string, text: string, layer=1) => 'Dialogue: '+layer+',' + assTime(start) + ',' + assTime(end) + ',' + name + ',,0,0,0,,' + text;
   p.segments.forEach(s => {
-    const fade = st.fade ? '\\fad(' + Math.min(140, Math.floor((s.end - s.start) * 200)) + ',100)' : '';
-    if(st.panel.preset!=='none'){
+    const st=effectiveStyle(p.style,s), alignment=st.alignment==='left'?1:st.alignment==='right'?3:2;
+    const x=st.captionX!==undefined?w*st.captionX/100:alignment===1?80:alignment===3?w-80:w/2,y=Math.round(h*st.captionY/100);
+    const animation=st.animation??(st.fade?'fade':'none');
+    const fade = animation!=='none' ? '\\fad(' + Math.min(140, Math.floor((s.end - s.start) * 200)) + ',100)' : '';
+    const motion=animation==='pop'?'\\fscx90\\fscy90\\t(0,140,\\fscx100\\fscy100)':animation==='slide'?'\\frx8\\t(0,140,\\frx0)':'';
+    const font=(t:Typography,lang:'arabic'|'english')=>`\\fn${assFontFamily(t.font)}\\fs${assFontSize(t,lang)}\\c${assColor(t.color)}\\b${t.bold?1:0}\\i${t.italic?1:0}\\u${t.underline?1:0}\\bord${t.outline}\\shad${t.shadow}\\fsp${t.spacing}`;
+    if(st.panel.preset!=='none'||st.canvas){
       const layout=panelLayout(st,s,w,h),an=alignment+3;
+      if(st.panel.preset!=='none')
       for(const drawing of panelDrawings(st.panel,layout.x,layout.top,layout.width,layout.height,fade))header.push(line(s.start,s.end,'English',drawing,0));
-      const textX=alignment===1?layout.x+layout.inset:alignment===3?layout.x+layout.width-layout.inset:w/2;
-      let rowY=layout.top+st.panel.padding;
-      for(const row of layout.arabic){header.push(line(s.start,s.end,'Arabic',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.arabicPitch/2+row.offset})${fade}}`+styledText(s,'arabic',st.arabic,true,row.start,row.end)));rowY+=layout.arabicPitch;}
+      const textX=alignment===1?layout.x+layout.inset:alignment===3?layout.x+layout.width-layout.inset:layout.x+layout.width/2;
+      const pos=(y:number)=>animation==='slide'?`\\move(${textX},${y+20},${textX},${y},0,140)`:`\\pos(${textX},${y})`;
+      let rowY=layout.top+layout.padding;
+      for(const row of layout.arabic){header.push(line(s.start,s.end,'Arabic',`{\\an${an}\\q2${pos(rowY+layout.arabicPitch/2+row.offset)}${font(st.arabic,'arabic')}${fade}${animation==='pop'?motion:''}}`+styledText(s,'arabic',st.arabic,true,row.start,row.end)));rowY+=layout.arabicPitch;}
       rowY+=layout.gap;
-      for(const row of layout.english){header.push(line(s.start,s.end,'English',`{\\an${an}\\q2\\pos(${textX},${rowY+layout.englishPitch/2+row.offset})${fade}}`+styledText(s,'english',st.english,targetLanguage(p).rtl,row.start,row.end)));rowY+=layout.englishPitch;}
+      for(const row of layout.english){header.push(line(s.start,s.end,'English',`{\\an${an}\\q2${pos(rowY+layout.englishPitch/2+row.offset)}${font(st.english,'english')}${fade}${animation==='pop'?motion:''}}`+styledText(s,'english',st.english,targetLanguage(p).rtl,row.start,row.end)));rowY+=layout.englishPitch;}
       return;
     }
-    if (st.mode === 'bilingual') header.push(line(s.start, s.end, 'Arabic', '{\\an' + alignment + '\\pos(' + x + ',' + (y - st.lineGap) + ')' + fade + '}' + styledText(s, 'arabic', st.arabic, true)));
-    header.push(line(s.start, s.end, 'English', '{\\an' + (alignment + 6) + '\\pos(' + x + ',' + y + ')' + fade + '}' + styledText(s, 'english', st.english, targetLanguage(p).rtl)));
+    if (st.mode === 'bilingual') header.push(line(s.start, s.end, 'Arabic', '{\\an' + alignment + '\\pos(' + x + ',' + (y - st.lineGap) + ')' + font(st.arabic,'arabic') + fade + motion + '}' + styledText(s, 'arabic', st.arabic, true)));
+    header.push(line(s.start, s.end, 'English', '{\\an' + (alignment + 6) + '\\pos(' + x + ',' + y + ')' + font(st.english,'english') + fade + motion + '}' + styledText(s, 'english', st.english, targetLanguage(p).rtl)));
   });
   const end = Math.max(0, p.clip.end - p.clip.start);
+  if(st.brand) { header.push(...brandEvents(p,w,h,line)); return header.join('\n')+'\n'; }
   if (st.showScholar && p.metadata.scholar) header.push(line(0, end, 'Label', '{\\an8\\pos(' + (w / 2) + ',125)}' + escapeAss(p.metadata.scholar)));
   if (st.showSource && (p.metadata.lecture || p.metadata.source)) header.push(line(0, end, 'Label', '{\\an2\\pos(' + (w / 2) + ',' + (h - 85) + ')}' + escapeAss(p.metadata.lecture || p.metadata.source)));
   if (p.metadata.channel) header.push(line(0, end, 'Label', '{\\an8\\fs'+assFontSize({...st.english,size:24,bold:false},'english')+'\\pos(' + (w / 2) + ',70)}' + escapeAss(p.metadata.channel)));
@@ -86,6 +93,8 @@ export function generateAss(p: Project) {
 export function captionWarnings(p: Project): string[] {
   const [w, h] = dimensions(p.style.ratio);
   return p.segments.flatMap((s, i) => {
+    const st=effectiveStyle(p.style,s);
+    if(st.canvas){const layout=panelLayout(st,s,w,h);return [...(layout.height>h*(1-2*st.canvas.marginY/100)?['Caption '+(i+1)+' exceeds the safe area. Fit captions safely or split this caption.']:[]),...(s.english.length/(s.end-s.start)>23?['Caption '+(i+1)+' may read too quickly.']:[])];}
     const lines = s.english.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length * p.style.english.size * .55 / (w - 160))), 0);
     const duration = s.end - s.start;
     const warnings = [];

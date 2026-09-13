@@ -5,12 +5,13 @@ import type { Style } from './types';
 export const FONT_CATALOG = catalog;
 export const FONT_FAMILIES = catalog.map(font => font.family);
 export function fontFiles(style: Style) {
-  const families = new Set([style.english.font, ...(style.mode === 'bilingual' ? [style.arabic.font] : []), 'Inter', 'Noto Naskh Arabic']);
+  const families = new Set(styleFamilies(style));
   return catalog.filter(font => families.has(font.family)).flatMap(font => font.files);
 }
 const promises = new Map<string, Promise<void>>();
+const styleFamilies=(style:Style)=>[style.english.font,...(style.mode==='bilingual'?[style.arabic.font]:[]),...(style.brand?[style.brand.scholar.font,style.brand.source.font,style.brand.channel.font,style.brand.sourceCard.font]:[]),'Inter','Noto Naskh Arabic'];
 export function loadCaptionFonts(style: Style) {
-  const families = [...new Set([style.english.font, ...(style.mode === 'bilingual' ? [style.arabic.font] : []), 'Inter', 'Noto Naskh Arabic'])];
+  const families = [...new Set(styleFamilies(style))];
   return Promise.all(families.map(family => {
     if (!promises.has(family)) {
       promises.set(family, Promise.all([400,700].map(weight => document.fonts.load(`${weight} 48px "${family}"`, 'بِسْمِ اللَّهِ ABC ā ī ū ḥ ṣ ḍ ṭ ʿ ʾ Знание Ёж فارسی اردو ज्ञान বাংলা தமிழ்'))).then(results => {
@@ -21,7 +22,7 @@ export function loadCaptionFonts(style: Style) {
   })).then(() => undefined);
 }
 export function useCaptionFonts(style: Style) {
-  const key = [style.english.font, style.mode, style.arabic.font].join('|');
+  const key = styleFamilies(style).join('|');
   const [state,setState] = useState({key:'',error:''});
   useEffect(() => {
     let cancelled=false;
