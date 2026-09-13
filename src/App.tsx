@@ -211,7 +211,7 @@ export default function App(){
     {missing&&<div className="missing-banner">Source media not found.<button disabled={busy} onClick={()=>void importMedia(true)}>Relink source</button></div>}
     {missingPreview&&!missing&&<div className="missing-banner">Playback cache not found.<button disabled={busy} onClick={()=>void rebuildPlayback()}>Restore playback</button></div>}
     <main className={'workspace '+(busy?'processing':'')}>
-      <Preview project={previewProject} player={player} time={time} playback={playback} ass={previewAss} fontsReady={captionFonts.ready} fontError={captionFonts.error} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy} update={edit} previewing={!!stylePreview}/>
+      <Preview project={previewProject} player={player} time={time} playback={playback} ass={previewAss} fontError={captionFonts.error} onImport={()=>p.media?setDialog('new'):void importMedia()} busy={busy} update={edit} previewing={!!stylePreview}/>
       <ReviewPanel project={p} update={edit} selectedId={playback.selectedId} selectedIds={selectedIds} onSelection={setSelectedIds} onSelect={id=>playback.activate(id)} onPlay={id=>playback.activate(id,true)} onNavigate={playback.navigate} onPrompt={()=>void copyPrompt()} onPaste={()=>setDialog('translate')} onGemini={()=>void launchGemini().catch(e=>notify(String(e)))} onTranscribe={()=>void transcribe()} busy={busy} notify={notify}/>
       <StylePanel project={p} update={edit} notify={notify} selectedId={playback.selectedId} selectedIds={selectedIds.filter(id=>p.segments.some(s=>s.id===id))} onPreview={setStylePreview}/>
     </main>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Maximize2, Pause, Play, Repeat2, RotateCcw, Upload, Volume2, VolumeX } from 'lucide-react';
 import { mediaUrl } from './bridge';
 import { dimensions } from './subtitles';
-import { fontFiles } from './fonts';
+import { fontFiles, loadCaptionFonts } from './fonts';
 import { PLAYBACK_RATES } from './playback';
 import type { ReviewPlayback } from './useReviewPlayback';
 import { formatTime } from './domain';
@@ -23,9 +23,9 @@ function loadEngine() {
   });
   return enginePromise;
 }
-export function Preview({project:p,player,time,playback,ass,fontsReady,fontError,onImport,busy,update,previewing}:{
+export function Preview({project:p,player,time,playback,ass,fontError,onImport,busy,update,previewing}:{
   update:(fn:(p:Project)=>Project,key?:string)=>void;previewing:boolean;
-  project:Project;player:RefObject<HTMLVideoElement|null>;time:number;playback:ReviewPlayback;ass:string;fontsReady:boolean;fontError:string;onImport:()=>void;busy:boolean;
+  project:Project;player:RefObject<HTMLVideoElement|null>;time:number;playback:ReviewPlayback;ass:string;fontError:string;onImport:()=>void;busy:boolean;
 }) {
   const [muted,setMuted]=useState(false),[error,setError]=useState('');
   const canvas=useRef<HTMLCanvasElement>(null),engine=useRef<Octopus|null>(null),bgVideo=useRef<HTMLVideoElement>(null),container=useRef<HTMLDivElement>(null);
@@ -33,15 +33,14 @@ export function Preview({project:p,player,time,playback,ass,fontsReady,fontError
   const assRef=useRef(ass),timeRef=useRef(time);assRef.current=ass;timeRef.current=time;
   const duration=p.clip.end-p.clip.start;
   useEffect(()=>{
-    if(!fontsReady)return;
     let disposed=false;
-    void loadEngine().then(()=>{
+    void Promise.all([loadEngine(),loadCaptionFonts(p.style)]).then(()=>{
       if(disposed||!canvas.current)return;
       engine.current=new window.SubtitlesOctopus({canvas:canvas.current,subContent:assRef.current,fonts:files.map(file=>'/fonts/'+file),workerUrl:'/libass/subtitles-octopus-worker.js',legacyWorkerUrl:'/libass/subtitles-octopus-worker-legacy.js',fallbackFont:'/fonts/noto-naskh-arabic-arabic-400-normal.ttf',targetFps:30,libassMemoryLimit:64,libassGlyphLimit:8,
         onReady:()=>{engine.current?.setCurrentTime(timeRef.current);setError('');},onError:()=>setError('Caption preview could not render. Reopen the project to retry.')});
     }).catch(error=>setError(String(error)));
     return()=>{disposed=true;engine.current?.dispose();engine.current=null;};
-  },[p.style.ratio,fontKey,fontsReady]);
+  },[p.style.ratio,fontKey]);
   useEffect(()=>{const timer=setTimeout(()=>{engine.current?.setTrack(ass);engine.current?.setCurrentTime(timeRef.current);},100);return()=>clearTimeout(timer);},[ass]);
   useEffect(()=>{engine.current?.setCurrentTime(time);},[time]);
   useEffect(()=>{
